@@ -1,5 +1,17 @@
-import { FlatList, Text, TextInput, View } from "react-native";
+import {
+  FlatList,
+  Text,
+  TextInput,
+  View,
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+} from "react-native";
 import SeriesCard from "../components/SeriesCard";
+import { useNavigation } from "@react-navigation/native";
+import { useEffect, useState } from "react";
+import { searchTitles } from "../services/api/search";
+
 const FEATURED_SERIES = [
   {
     id: "tt0903747",
@@ -43,8 +55,29 @@ const FEATURED_SERIES = [
       "https://zardfilm.in/wp-content/uploads/2024/08/static-assets-upload16249666914462580424.webp",
   },
 ];
-
+const QUALITIES = ["720p.Web-DL", "480p.Web-DL", "1080p.Web-DL", "720p.BluRay"];
 export default function HomeScreen() {
+  const navigation = useNavigation();
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [quality, setQuality] = useState(QUALITIES[0]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (query.length < 2) {
+      setResults([]);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      setLoading(true);
+      const data = await searchTitles(query);
+      setResults(data);
+      setLoading(false);
+    }, 350); // for debounce
+    return () => clearTimeout(timeout);
+  }, [query]);
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000", padding: 30 }}>
       <Text
@@ -61,6 +94,8 @@ export default function HomeScreen() {
       <TextInput
         placeholder="نام سریال مورد نظر را وارد نمایید..."
         placeholderTextColor="#777"
+        value={query}
+        onChangeText={setQuery}
         style={{
           backgroundColor: "#111",
           color: "#fff",
@@ -68,6 +103,42 @@ export default function HomeScreen() {
           borderRadius: 12,
           marginBottom: 20,
         }}
+      />
+      <View style={styles.qualityRow}>
+        {QUALITIES.map((q) => (
+          <Pressable
+            key={q}
+            onPress={() => setQuality(q)}
+            style={[
+              styles.qualityBtn,
+              quality === q && styles.qualityBtnActive,
+            ]}
+          >
+            <Text style={styles.qualityText}>{q}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
+
+      <FlatList
+        data={results}
+        keyExtractor={(item) => item.imdbID}
+        keyboardShouldPersistTaps="handled"
+        renderItem={({ item }) => (
+          <Pressable
+            style={styles.item}
+            onPress={() =>
+              navigation.navigate("Title", { imdbID: item.imdbID, quality })
+            }
+          >
+            <Text style={styles.title}>{item.title}</Text>
+
+            {!item.hasLink && (
+              <Text style={styles.noLink}>No download link</Text>
+            )}
+          </Pressable>
+        )}
       />
 
       <Text
@@ -97,3 +168,54 @@ export default function HomeScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#000",
+  },
+  input: {
+    backgroundColor: "#1c1c1c",
+    color: "#fff",
+    padding: 12,
+    borderRadius: 10,
+    fontSize: 16,
+  },
+  item: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#222",
+  },
+  title: {
+    color: "#fff",
+    fontSize: 15,
+  },
+  noLink: {
+    color: "#888",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  qualityRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 16,
+  },
+  qualityBtn: {
+    borderWidth: 1,
+    borderColor: "#444",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  qualityBtnActive: {
+    backgroundColor: "#eeeb3f",
+    borderColor: "#000000",
+  },
+  qualityText: {
+    color: "#ffffff",
+    fontSize: 12,
+  },
+});
