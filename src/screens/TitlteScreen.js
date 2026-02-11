@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,61 +8,45 @@ import {
   Text,
   View,
 } from "react-native";
-import { getTitleDetails } from "../services/api/title";
-import { getWatchData } from "../services/api/watch";
 import ErrorContainer from "../components/ErrorContainer";
 import DropdownSelect from "../components/DropdownSelect";
-import { getTitleMeta } from "../services/api/titleMeta";
+import { useTitleMeta } from "../hooks/useTitleMeta";
+import { useTitleDetails } from "../hooks/useTitleDetails";
+import { useWatchData } from "../hooks/useWatchData";
+import { useFavorites } from "../hooks/useFavorites";
+import { FavoriteStar } from "../components/FavoriteStar";
 
 export default function TitleScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   // Extracting imdbID and quality from route params (guard if params is null)
-  const { imdbID, quality } = route.params || {};
-
-  const [title, setTitle] = useState(null);
-  const [meta, setMeta] = useState(null);
-  const [episodes, setEpisodes] = useState([]);
-
+  const { imdbID, quality = "720p.BluRay" } = route.params ?? {};
   const [season, setSeason] = useState("S01");
-  const [selectedQuality] = useState(quality);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  //fetch with react query
+  const {
+    data: title,
+    isPending: titleLoading,
+    error: titleError,
+    refetch: refetchTitle,
+  } = useTitleDetails(imdbID);
 
-  useEffect(() => {
-    if (!imdbID) return;
-    // meta data => country , plot, totalSeasons
-    (async () => {
-      try {
-        const data = await getTitleMeta(imdbID);
-        setMeta(data);
-      } catch {
-        console.warn("Meta not available");
-      }
-    })();
-  }, [imdbID]);
+  const {
+    data: meta,
+    isPending: metaLoading,
+    error: metaError,
+  } = useTitleMeta(imdbID);
 
-  const load = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Fetch title details and watch data in parallel
-      const t = await getTitleDetails(imdbID);
-      const w = await getWatchData(imdbID, season, selectedQuality);
-      setTitle(t);
-      setEpisodes(w.episodes || []);
-    } catch (err) {
-      setError(err.message || "خطا در دریافت اطلاعات");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: watchData,
+    isPending: watchLoading,
+    error: watchError,
+    refetch: refetchWatch,
+  } = useWatchData(imdbID, season, quality);
 
-  useEffect(() => {
-    if (!imdbID || !quality) return;
-    load();
-  }, [imdbID, season, selectedQuality]);
+  const loading = titleLoading || metaLoading || (watchLoading && quality);
+  const error = titleError || metaError || (watchError && quality);
 
   // Generate season options based on meta data api
   const seasons = meta?.totalSeasons
@@ -76,7 +60,10 @@ export default function TitleScreen() {
     return (
       <ErrorContainer
         message={error}
-        onRetry={load}
+        onRetry={() => {
+          refetchTitle();
+          refetchWatch();
+        }}
         onBack={() => navigation.goBack()}
       />
     );
@@ -84,7 +71,16 @@ export default function TitleScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>{title?.title}</Text>
+        <View style={styles.fav}>
+          <Text style={styles.title}>{title?.title}</Text>
+          <FavoriteStar
+            active={isFavorite(title?.imdbID)}
+            onPress={() =>
+              toggleFavorite({ imdbID: title?.imdbID, title: title?.title })
+            }
+          />
+        </View>
+
         <Text style={styles.year}>{title?.year}</Text>
 
         <View style={styles.genresRow}>
@@ -115,7 +111,7 @@ export default function TitleScreen() {
       )}
 
       <FlatList
-        data={episodes}
+        data={watchData?.episodes}
         keyExtractor={(item, index) => item?.episode ?? String(index)}
         contentContainerStyle={{ paddingBottom: 40 }}
         renderItem={({ item }) => (
@@ -124,7 +120,7 @@ export default function TitleScreen() {
               <Text style={styles.episodeText}>
                 قسمت {item.episode ? item.episode.replace("E", "") : "?"}
               </Text>
-              <Text style={styles.qualityText}>{selectedQuality}</Text>
+              <Text style={styles.qualityText}>{quality}</Text>
             </View>
 
             <View style={styles.actions}>
@@ -287,5 +283,10 @@ const styles = StyleSheet.create({
     color: "#777",
     marginTop: 6,
     fontSize: 12,
+  },
+  fav: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
   },
 });
