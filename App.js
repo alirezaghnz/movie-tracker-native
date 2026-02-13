@@ -2,6 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import MainNavigator from "./src/navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,10 +16,12 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <NavigationContainer>
-        <MainNavigator />
-        <StatusBar style="light" />
-      </NavigationContainer>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NavigationContainer>
+          <MainNavigator />
+          <StatusBar style="light" />
+        </NavigationContainer>
+      </GestureHandlerRootView>
     </QueryClientProvider>
   );
 }
