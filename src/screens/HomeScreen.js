@@ -11,6 +11,7 @@ import SeriesCard from "../components/SeriesCard";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { searchTitles } from "../services/api/search";
+import FavoriteFab from "../components/FavoriteFab";
 
 const FEATURED_SERIES = [
   {
@@ -55,7 +56,7 @@ const FEATURED_SERIES = [
       "https://zardfilm.in/wp-content/uploads/2024/08/static-assets-upload16249666914462580424.webp",
   },
 ];
-const QUALITIES = ["720p.Web-DL", "480p.Web-DL", "1080p.Web-DL", "720p.BluRay"];
+const QUALITIES = ["480", "720", "1080"];
 export default function HomeScreen() {
   const navigation = useNavigation();
   const [query, setQuery] = useState("");
@@ -105,6 +106,7 @@ export default function HomeScreen() {
         }}
       />
       <View style={styles.qualityRow}>
+        <Text style={{ color: "#ccc" }}>انتخاب کیفیت:</Text>
         {QUALITIES.map((q) => (
           <Pressable
             key={q}
@@ -165,6 +167,7 @@ export default function HomeScreen() {
         )}
         showsVerticalScrollIndicator={false}
       />
+      <FavoriteFab />
     </View>
   );
 }
