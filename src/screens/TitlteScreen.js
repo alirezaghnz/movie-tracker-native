@@ -2,12 +2,16 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Button,
   FlatList,
   Pressable,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
+import * as IntentLauncher from "expo-intent-launcher";
 import ErrorContainer from "../components/ErrorContainer";
 import DropdownSelect from "../components/DropdownSelect";
 import { useTitleMeta } from "../hooks/useTitleMeta";
@@ -20,7 +24,7 @@ export default function TitleScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   // Extracting imdbID and quality from route params (guard if params is null)
-  const { imdbID, quality = "720p.BluRay" } = route.params ?? {};
+  const { imdbID, quality = "720" } = route.params ?? {};
   const [season, setSeason] = useState("S01");
   const { isFavorite, toggleFavorite } = useFavorites();
 
@@ -44,6 +48,24 @@ export default function TitleScreen() {
     error: watchError,
     refetch: refetchWatch,
   } = useWatchData(imdbID, season, quality);
+
+  const downloadSeasonWithAdm = async (e) => {
+    try {
+      for (let i = 0; i < e.length; i++) {
+        await IntentLauncher.startActivityAsync("android.intent.action.SEND", {
+          type: "text/plain",
+          extra: {
+            "android.intent.extra.TEXT": e[i].downloadUrl,
+          },
+          packageName: "com.dv.adm",
+        });
+        await new Promise((res) => setTimeout(res, 800));
+      }
+      Alert.alert("Added to ADM queue");
+    } catch (err) {
+      Alert.alert("ADM not installed");
+    }
+  };
 
   const loading = titleLoading || metaLoading || (watchLoading && quality);
   const error = titleError || metaError || (watchError && quality);
@@ -85,7 +107,7 @@ export default function TitleScreen() {
 
         <View style={styles.genresRow}>
           {title?.genres.map((g, index) => (
-            <View key={index} style={styles.genreBadge}>
+            <View key={`${g}-${index}`} style={styles.genreBadge}>
               <Text style={styles.genreText}>{g}</Text>
             </View>
           ))}
@@ -103,16 +125,68 @@ export default function TitleScreen() {
           onChange={setSeason}
         />
       </View>
+      <View style={{ alignItems: "center" }}>
+        <TouchableOpacity
+          onPress={() => downloadSeasonWithAdm(watchData?.episodes)}
+        >
+          <Text
+            style={{
+              color: "#ffffff",
+              padding: 12,
+              backgroundColor: "#138fe2",
+              borderRadius: 12,
+              marginBottom: 5,
+            }}
+          >
+            دانلود کل فصل
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {loading && (
         <View style={styles.loadOverlay}>
           <ActivityIndicator size="large" color="#e50914" />
+
+          {/* Show qualities based on the quality value */}
+          <View style={{ alignItems: "center" }}>
+            <Text
+              style={{
+                color: "#0968e5",
+                marginBottom: 5,
+                fontWeight: "bold",
+                fontSize: 22,
+              }}
+            >
+              در حال گشتن بین کیفیت های موجود:
+            </Text>
+            {quality === "480" ? (
+              <View>
+                <Text style={styles.qualityText}>480p.BluRay</Text>
+                <Text style={styles.qualityText}>480p.Web-DL</Text>
+              </View>
+            ) : quality === "720" ? (
+              <View>
+                <Text style={styles.qualityText}>720p.x265.10bit.BluRay</Text>
+                <Text style={styles.qualityText}>720p.BluRay</Text>
+                <Text style={styles.qualityText}>720p.x265.BluRay</Text>
+                <Text style={styles.qualityText}>720p.Web-DL</Text>
+                <Text style={styles.qualityText}>720p.x265.10bit.Web-DL</Text>
+              </View>
+            ) : quality === "1080" ? (
+              <View>
+                <Text style={styles.qualityText}>1080p.BluRay</Text>
+                <Text style={styles.qualityText}>1080p.x265.10bit.BluRay</Text>
+                <Text style={styles.qualityText}>1080p.Web-DL</Text>
+                <Text style={styles.qualityText}>1080p.x265.10bit.Web-DL</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
       )}
 
       <FlatList
         data={watchData?.episodes}
-        keyExtractor={(item, index) => item?.episode ?? String(index)}
+        keyExtractor={(item) => `${imdbID}-${season}-${item?.episode}`}
         contentContainerStyle={{ paddingBottom: 40 }}
         renderItem={({ item }) => (
           <View style={styles.episodeCard}>
@@ -134,6 +208,7 @@ export default function TitleScreen() {
                     year: title?.year,
                     season,
                     episode: item.episode,
+                    // subtitles: item.subtitles,
                   })
                 }
               >
@@ -187,6 +262,15 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     marginTop: 10,
   },
+  qualityText: {
+    color: "#fff",
+    fontSize: 14,
+    marginVertical: 2,
+    backgroundColor: "rgba(229, 9, 20, 0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+  },
 
   genreBadge: {
     borderWidth: 1,
@@ -204,7 +288,7 @@ const styles = StyleSheet.create({
   },
 
   section: {
-    marginBottom: 16,
+    marginBottom: 1,
   },
 
   episodeCard: {
