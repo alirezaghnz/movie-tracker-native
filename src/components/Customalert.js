@@ -139,12 +139,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 14,
+    fontFamily: "IRANSans",
   },
 
   title: {
     color: "#fff",
     fontSize: 14.5,
-    fontWeight: "700",
+    fontFamily: "IRANSans",
     textAlign: "right",
     writingDirection: "rtl",
     marginBottom: 2,
@@ -152,6 +153,7 @@ const styles = StyleSheet.create({
   body: {
     color: "#b5b5ba",
     fontSize: 13,
+    fontFamily: "IRANSans",
     lineHeight: 20,
     textAlign: "right",
     writingDirection: "rtl",
