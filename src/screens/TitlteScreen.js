@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -14,7 +15,11 @@ import DropdownSelect from "../components/DropdownSelect";
 import { useFavorites } from "../hooks/useFavorites";
 import { FavoriteStar } from "../components/FavoriteStar";
 
-import { getTVDetails, getTVSeasonsDetails } from "../services/api/tmdb";
+import {
+  getImageUrl,
+  getTVDetails,
+  getTVSeasonsDetails,
+} from "../services/api/tmdb";
 import ErrorContainer from "../components/ErrorContainer";
 
 export default function TitleScreen() {
@@ -90,46 +95,6 @@ export default function TitleScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.fav}>
-          <Text style={styles.title}>{details?.name}</Text>
-          <FavoriteStar
-            active={isFavorite(details?.id)}
-            onPress={() =>
-              toggleFavorite({
-                id: details?.id,
-                title: details?.name,
-                year: details?.first_air_date,
-              })
-            }
-          />
-        </View>
-
-        <Text style={styles.year}>{details?.first_air_date}</Text>
-        <View style={styles.genresRow}>
-          {details?.genres.map((g, index) => (
-            <View key={`${g}-${index}`} style={styles.genreBadge}>
-              <Text style={styles.genreText}>{g.name}</Text>
-            </View>
-          ))}
-        </View>
-
-        {!!details?.overview && (
-          <Text style={styles.plot}>{details?.overview}</Text>
-        )}
-        {!!details?.origin_country && (
-          <Text style={styles.country}>{details?.origin_country}</Text>
-        )}
-      </View>
-
-      <View style={styles.section}>
-        <DropdownSelect
-          label="انتخاب فصل"
-          value={seasonName}
-          options={seasonOptions}
-          onChange={handleSeasonChange}
-        />
-      </View>
       {/*
       <View style={{ alignItems: "center" }}>
         <TouchableOpacity
@@ -157,6 +122,59 @@ export default function TitleScreen() {
         data={seasonData?.episodes}
         keyExtractor={(item) => `${id}-${season}-${item.episode_number}`}
         contentContainerStyle={{ paddingBottom: 40 }}
+        ListHeaderComponent={
+          <>
+            <View style={styles.posterContainer}>
+              <Image
+                source={{ uri: getImageUrl(details?.backdrop_path) }}
+                style={styles.poster}
+              />
+              <View style={styles.favoriteButton}>
+                <FavoriteStar
+                  active={isFavorite(details?.id)}
+                  onPress={() =>
+                    toggleFavorite({
+                      id: details?.id,
+                      title: details?.name,
+                      year: details?.first_air_date,
+                      poster_path: details?.poster_path,
+                    })
+                  }
+                />
+              </View>
+
+              <View style={styles.posterOverlay}>
+                <View style={styles.genresRow}>
+                  {details?.genres.map((g, index) => (
+                    <View key={`${g}-${index}`} style={styles.genreBadge}>
+                      <Text style={styles.genreText}>{g.name}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.title}>{details?.name}</Text>
+                <View style={styles.metaRow}>
+                  <Text style={styles.year}>{details?.first_air_date}</Text>
+                </View>
+              </View>
+            </View>
+
+            {!!details?.overview && (
+              <Text style={styles.plot}>{details?.overview}</Text>
+            )}
+            {!!details?.origin_country && (
+              <Text style={styles.country}>{details?.origin_country}</Text>
+            )}
+
+            <View style={{ zIndex: 1000, elevation: 1000 }}>
+              <DropdownSelect
+                label="انتخاب فصل"
+                value={seasonName}
+                options={seasonOptions}
+                onChange={handleSeasonChange}
+              />
+            </View>
+          </>
+        }
         renderItem={({ item }) => (
           <View style={styles.episodeCard}>
             <View style={styles.episodeInfo}>
@@ -200,34 +218,56 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    paddingHorizontal: 20,
-  },
-
-  header: {
-    marginTop: 40,
-    marginBottom: 20,
   },
 
   title: {
     color: "#fff",
     fontSize: 26,
     fontWeight: "800",
+    marginTop: 10,
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowRadius: 8,
   },
-
+  favoriteButton: {
+    position: "absolute",
+    top: 40,
+    right: 16,
+    zIndex: 10,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 999,
+  },
+  poster: {
+    width: "100%",
+    height: "100%",
+  },
+  posterContainer: {
+    width: "100%",
+    height: 350,
+    borderRadius: 20,
+    opverflow: "hidden",
+  },
+  posterOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "flex-end",
+    padding: 16,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  metaRow: {
+    flexDirection: "row",
+    marginTop: 10,
+  },
   year: {
-    color: "#880000",
-    fontSize: 14,
-    marginTop: 4,
-    backgroundColor: "#fbff00",
+    backgroundColor: "#e50914",
+    color: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 8,
-    padding: 4,
-    width: 80,
+    overflow: "hidden",
   },
 
   genresRow: {
     flexDirection: "row-reverse",
     flexWrap: "wrap",
-    marginTop: 10,
   },
   qualityText: {
     color: "#fff",
@@ -240,18 +280,17 @@ const styles = StyleSheet.create({
   },
 
   genreBadge: {
-    borderWidth: 1,
-    borderColor: "#333",
-    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     marginLeft: 6,
     marginBottom: 6,
   },
 
   genreText: {
-    color: "#ccc",
-    fontSize: 11,
+    color: "#fff",
+    fontSize: 12,
   },
 
   section: {
@@ -276,10 +315,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     fontFamily: "IRANSans",
-  },
-
-  actions: {
-    flexDirection: "row-reverse",
   },
 
   watchBtn: {
@@ -324,13 +359,15 @@ const styles = StyleSheet.create({
   },
   plot: {
     color: "#aaa",
-    marginTop: 10,
+    marginTop: 5,
     lineHeight: 20,
+    padding: 10,
   },
   country: {
     color: "#777",
     marginTop: 6,
     fontSize: 12,
+    padding: 10,
   },
   fav: {
     flexDirection: "row",
