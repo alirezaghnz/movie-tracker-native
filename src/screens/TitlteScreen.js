@@ -1,54 +1,71 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  Button,
   FlatList,
   Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
-import * as IntentLauncher from "expo-intent-launcher";
-import ErrorContainer from "../components/ErrorContainer";
+
 import DropdownSelect from "../components/DropdownSelect";
-import { useTitleMeta } from "../hooks/useTitleMeta";
-import { useTitleDetails } from "../hooks/useTitleDetails";
-import { useWatchData } from "../hooks/useWatchData";
+
 import { useFavorites } from "../hooks/useFavorites";
 import { FavoriteStar } from "../components/FavoriteStar";
+
+import { getTVDetails, getTVSeasonsDetails } from "../services/api/tmdb";
+import ErrorContainer from "../components/ErrorContainer";
 
 export default function TitleScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   // Extracting imdbID and quality from route params (guard if params is null)
-  const { imdbID, quality = "720" } = route.params ?? {};
-  const [season, setSeason] = useState("S01");
+  const { id, type } = route.params ?? {};
+  const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [season, setSeason] = useState(1);
+  const [seasonName, setSeasonName] = useState("");
+  const [seasonData, setSeasonData] = useState(null);
+  const [episodeLoading, setEpisodeLoading] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
 
-  //fetch with react query
-  const {
-    data: title,
-    isPending: titleLoading,
-    error: titleError,
-    refetch: refetchTitle,
-  } = useTitleDetails(imdbID);
+  useEffect(() => {
+    getTVDetails(id, type)
+      .then((data) => {
+        setDetails(data);
 
-  const {
-    data: meta,
-    isPending: metaLoading,
-    error: metaError,
-  } = useTitleMeta(imdbID);
+        const firstSeason = data.seasons?.find((s) => s.season_number > 0);
+        if (firstSeason) {
+          setSeason(firstSeason.season_number);
+          setSeasonName(firstSeason.name);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [id, type]);
 
-  const {
-    data: watchData,
-    isPending: watchLoading,
-    error: watchError,
-    refetch: refetchWatch,
-  } = useWatchData(imdbID, season, quality);
+  useEffect(() => {
+    if (!id || !season) return;
+    setEpisodeLoading(true);
+    getTVSeasonsDetails(id, season)
+      .then(setSeasonData)
+      .finally(() => setEpisodeLoading(false));
+  }, [id, season]);
 
+  const handleSeasonChange = (name) => {
+    if (!details?.seasons) return;
+
+    const found = details.seasons.find((s) => s.name === name);
+    if (found) {
+      setSeasonName(found.name);
+      setSeason(found.season_number);
+    }
+  };
+
+  const seasonOptions =
+    details?.seasons?.filter((s) => s.season_number > 0).map((s) => s.name) ??
+    [];
+  /*
   const downloadSeasonWithAdm = async (e) => {
     try {
       for (let i = 0; i < e.length; i++) {
@@ -66,65 +83,54 @@ export default function TitleScreen() {
       Alert.alert("ADM not installed");
     }
   };
+*/
 
-  const loading = titleLoading || metaLoading || (watchLoading && quality);
-  const error = titleError || metaError || (watchError && quality);
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} />;
+  if (!details) return <ErrorContainer />;
 
-  // Generate season options based on meta data api
-  const seasons = meta?.totalSeasons
-    ? Array.from(
-        { length: meta.totalSeasons },
-        (_, i) => `S${String(i + 1).padStart(2, "0")}`,
-      )
-    : ["S01"];
-
-  if (error) {
-    return (
-      <ErrorContainer
-        message={error}
-        onRetry={() => {
-          refetchTitle();
-          refetchWatch();
-        }}
-        onBack={() => navigation.goBack()}
-      />
-    );
-  }
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.fav}>
-          <Text style={styles.title}>{title?.title}</Text>
+          <Text style={styles.title}>{details?.name}</Text>
           <FavoriteStar
-            active={isFavorite(title?.imdbID)}
+            active={isFavorite(details?.id)}
             onPress={() =>
-              toggleFavorite({ imdbID: title?.imdbID, title: title?.title })
+              toggleFavorite({
+                id: details?.id,
+                title: details?.name,
+                year: details?.first_air_date,
+              })
             }
           />
         </View>
 
-        <Text style={styles.year}>{title?.year}</Text>
-
+        <Text style={styles.year}>{details?.first_air_date}</Text>
         <View style={styles.genresRow}>
-          {title?.genres.map((g, index) => (
+          {details?.genres.map((g, index) => (
             <View key={`${g}-${index}`} style={styles.genreBadge}>
-              <Text style={styles.genreText}>{g}</Text>
+              <Text style={styles.genreText}>{g.name}</Text>
             </View>
           ))}
         </View>
 
-        {!!meta?.plot && <Text style={styles.plot}>{meta?.plot}</Text>}
-        {!!meta?.country && <Text style={styles.country}>{meta?.country}</Text>}
+        {!!details?.overview && (
+          <Text style={styles.plot}>{details?.overview}</Text>
+        )}
+        {!!details?.origin_country && (
+          <Text style={styles.country}>{details?.origin_country}</Text>
+        )}
       </View>
 
       <View style={styles.section}>
         <DropdownSelect
           label="انتخاب فصل"
-          value={season}
-          options={seasons}
-          onChange={setSeason}
+          value={seasonName}
+          options={seasonOptions}
+          onChange={handleSeasonChange}
         />
       </View>
+      {/*
       <View style={{ alignItems: "center" }}>
         <TouchableOpacity
           onPress={() => downloadSeasonWithAdm(watchData?.episodes)}
@@ -136,65 +142,27 @@ export default function TitleScreen() {
               backgroundColor: "#138fe2",
               borderRadius: 12,
               marginBottom: 5,
+              fontFamily: "IRANSans",
+              fontSize: 12,
             }}
           >
             دانلود کل فصل
           </Text>
         </TouchableOpacity>
       </View>
+      */}
 
-      {loading && (
-        <View style={styles.loadOverlay}>
-          <ActivityIndicator size="large" color="#e50914" />
-
-          {/* Show qualities based on the quality value */}
-          <View style={{ alignItems: "center" }}>
-            <Text
-              style={{
-                color: "#0968e5",
-                marginBottom: 5,
-                fontWeight: "bold",
-                fontSize: 22,
-              }}
-            >
-              در حال گشتن بین کیفیت های موجود:
-            </Text>
-            {quality === "480" ? (
-              <View>
-                <Text style={styles.qualityText}>480p.BluRay</Text>
-                <Text style={styles.qualityText}>480p.Web-DL</Text>
-              </View>
-            ) : quality === "720" ? (
-              <View>
-                <Text style={styles.qualityText}>720p.x265.10bit.BluRay</Text>
-                <Text style={styles.qualityText}>720p.BluRay</Text>
-                <Text style={styles.qualityText}>720p.x265.BluRay</Text>
-                <Text style={styles.qualityText}>720p.Web-DL</Text>
-                <Text style={styles.qualityText}>720p.x265.10bit.Web-DL</Text>
-              </View>
-            ) : quality === "1080" ? (
-              <View>
-                <Text style={styles.qualityText}>1080p.BluRay</Text>
-                <Text style={styles.qualityText}>1080p.x265.10bit.BluRay</Text>
-                <Text style={styles.qualityText}>1080p.Web-DL</Text>
-                <Text style={styles.qualityText}>1080p.x265.10bit.Web-DL</Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      )}
-
+      {episodeLoading && <ActivityIndicator style={{ marginVertical: 10 }} />}
       <FlatList
-        data={watchData?.episodes}
-        keyExtractor={(item) => `${imdbID}-${season}-${item?.episode}`}
+        data={seasonData?.episodes}
+        keyExtractor={(item) => `${id}-${season}-${item.episode_number}`}
         contentContainerStyle={{ paddingBottom: 40 }}
         renderItem={({ item }) => (
           <View style={styles.episodeCard}>
             <View style={styles.episodeInfo}>
               <Text style={styles.episodeText}>
-                قسمت {item.episode ? item.episode.replace("E", "") : "?"}
+                قسمت {item.episode_number} - {item.name}
               </Text>
-              <Text style={styles.qualityText}>{quality}</Text>
             </View>
 
             <View style={styles.actions}>
@@ -202,25 +170,24 @@ export default function TitleScreen() {
                 style={styles.watchBtn}
                 onPress={() =>
                   navigation.navigate("Player", {
-                    streamUrl: item.streamUrl,
-                    downloadUrl: item.downloadUrl,
-                    title: title?.title,
-                    year: title?.year,
+                    id,
+                    type: "tv",
                     season,
-                    episode: item.episode,
-                    // subtitles: item.subtitles,
+                    ep: item.episode_number,
                   })
                 }
               >
                 <Text style={styles.watchText}> پخش ▶</Text>
               </Pressable>
 
+              {/*
               <Pressable
                 style={styles.downloadBtn}
-                onPress={() => console.log(item.downloadUrl)}
+                onPress={() => downloadWithAdm(item.streamUrl)}
               >
                 <Text style={styles.downloadText}>⬇ دانلود</Text>
               </Pressable>
+              */}
             </View>
           </View>
         )}
@@ -254,7 +221,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fbff00",
     borderRadius: 8,
     padding: 4,
-    width: 40,
+    width: 80,
   },
 
   genresRow: {
@@ -308,11 +275,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 15,
     fontWeight: "600",
-  },
-
-  qualityText: {
-    color: "#aaa",
-    fontSize: 12,
+    fontFamily: "IRANSans",
   },
 
   actions: {
@@ -325,15 +288,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 10,
     marginLeft: 10,
-    width: "50%",
+    width: "100%",
     justifyContent: "center",
     alignItems: "center",
   },
 
   watchText: {
     color: "#fff",
-    fontWeight: "700",
     fontSize: 14,
+    fontFamily: "IRANSans",
   },
 
   downloadBtn: {
@@ -350,6 +313,7 @@ const styles = StyleSheet.create({
   downloadText: {
     color: "#ccc",
     fontSize: 13,
+    fontFamily: "IRANSans",
   },
   loadOverlay: {
     ...StyleSheet.absoluteFillObject,
