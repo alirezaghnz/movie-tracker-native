@@ -96,10 +96,25 @@ export default function HomeScreen() {
                 navigation.navigate("Title", { id: item.id, type: "tv" })
               }
             >
-              <Text style={styles.itemTitle}>
-                {item.name}{" "}
-                <Text style={{ color: "yellow" }}>{item.first_air_date}</Text>
-              </Text>
+              <Image
+                source={{ uri: getImageUrl(item.poster_path) }}
+                style={styles.searchPoster}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.itemTitle}>
+                  {item.name}{" "}
+                  <Text
+                    style={{
+                      color: "yellow",
+                      fontSize: 10,
+                      marginTop: 4,
+                      textAlign: "right",
+                    }}
+                  >
+                    {item.first_air_date.substring(0, 4)}
+                  </Text>
+                </Text>
+              </View>
             </Pressable>
           ))}
 
@@ -213,13 +228,24 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   item: {
+    flexDirection: "row-reverse",
     paddingVertical: 12,
     borderBottomWidth: 1,
+    alignItems: "center",
     borderBottomColor: "#222",
+    gap: 12,
+  },
+  searchPoster: {
+    width: 46,
+    height: 66,
+    borderRadius: 6,
+    backgroundColor: "#1a1a1a",
   },
   itemTitle: {
     color: "#fff",
     fontSize: 15,
+    textAlign: "left",
+    writingDirection: "ltr",
   },
   grid: {
     flexDirection: "row",
