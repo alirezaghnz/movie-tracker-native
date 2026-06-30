@@ -7,6 +7,7 @@ import {
   Animated,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -16,6 +17,8 @@ import { useCallback, useRef, useState } from "react";
 import { Swipeable } from "react-native-gesture-handler";
 import SwipeDeleteAction from "../components/SwipeDeleteAction";
 import ErrorModal from "../components/ErrorModal";
+import { getImageUrl } from "../services/api/tmdb";
+import { BackButton } from "../components/BackButton";
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 export function FavoriteScreen() {
@@ -118,7 +121,7 @@ export function FavoriteScreen() {
         ]}
       >
         <View style={styles.headerContent}>
-          <Text style={styles.headerCount}>{favorites.length} سریال</Text>
+          <BackButton />
           <Text style={styles.headerTitle}>علاقه‌مندی‌ها</Text>
         </View>
 
@@ -227,6 +230,15 @@ export function FavoriteScreen() {
               )}
 
               <View style={styles.itemContent}>
+                <Image
+                  source={{ uri: getImageUrl(item.poster_path) }}
+                  style={{
+                    width: 50,
+                    height: 70,
+                    borderRadius: 6,
+                    backgroundColor: "#1a1a1a",
+                  }}
+                />
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemTitle} numberOfLines={2}>
                     {item.name || item.title}
@@ -400,8 +412,9 @@ const styles = StyleSheet.create({
   },
   itemContent: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     alignItems: "center",
+    gap: 12,
   },
   itemHeader: {
     flex: 1,
