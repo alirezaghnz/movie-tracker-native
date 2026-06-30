@@ -1,224 +1,303 @@
 import {
-  FlatList,
+  ScrollView,
   Text,
   TextInput,
   View,
   ActivityIndicator,
   Pressable,
   StyleSheet,
+  Image,
+  SafeAreaView,
+  TouchableOpacity,
+  Linking,
 } from "react-native";
-import SeriesCard from "../components/SeriesCard";
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
-import { searchTitles } from "../services/api/search";
+import { useEffect, useRef, useState } from "react";
 import FavoriteFab from "../components/FavoriteFab";
+import { getImageUrl, getTrending, searchTV } from "../services/api/tmdb";
+import TextTicker from "react-native-text-ticker";
 
-const FEATURED_SERIES = [
-  {
-    id: "tt0903747",
-    title: "Breaking Bad",
-    year: "2008",
-    poster:
-      "https://zardfilm.in/wp-content/uploads/2023/09/Breaking-Bad-3.webp",
-  },
-  {
-    id: "tt3032476",
-    title: "Better Call Saul",
-    year: "2015",
-    poster:
-      "https://zardfilm.in/wp-content/uploads/2022/04/Better-Call-Saul-Season-6-1.jpg",
-  },
-  {
-    id: "tt1475582",
-    title: "Sherlock",
-    year: "2010",
-    poster: "https://zardfilm.in/wp-content/uploads/2023/08/1-110.webp",
-  },
-  {
-    id: "tt0944947",
-    title: "Game of Thrones",
-    year: "2011",
-    poster:
-      "https://zardfilm.in/wp-content/uploads/2024/08/ae8c21bc78b35923cdd54ef5868915ef.webp",
-  },
-  {
-    id: "tt2861424",
-    title: "Rick and Morty",
-    year: "2013",
-    poster:
-      "https://zardfilm.in/wp-content/uploads/2025/09/Haunted-Hotel-2-500x741.webp",
-  },
-  {
-    id: "tt4574334",
-    title: "Stranger Things",
-    year: "2016",
-    poster:
-      "https://zardfilm.in/wp-content/uploads/2024/08/static-assets-upload16249666914462580424.webp",
-  },
-];
-const QUALITIES = ["480", "720", "1080"];
 export default function HomeScreen() {
   const navigation = useNavigation();
   const [query, setQuery] = useState("");
+  const [trendingSeries, setTrendingSeries] = useState([]);
   const [results, setResults] = useState([]);
-  const [quality, setQuality] = useState(QUALITIES[0]);
-  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const inputRef = useRef(null); // for focus on input
 
   useEffect(() => {
-    if (query.length < 2) {
+    getTrending("tv", "day")
+      .then((data) => setTrendingSeries(data.results))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!query.trim()) {
       setResults([]);
       return;
     }
-
-    const timeout = setTimeout(async () => {
-      setLoading(true);
-      const data = await searchTitles(query);
-      setResults(data);
-      setLoading(false);
-    }, 350); // for debounce
+    setSearchLoading(true);
+    const timeout = setTimeout(() => {
+      searchTV(query)
+        .then((data) => setResults(data.results))
+        .catch(console.error)
+        .finally(() => setSearchLoading(false));
+    }, 500);
     return () => clearTimeout(timeout);
   }, [query]);
 
+  const isSearching = query.trim().length > 0;
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#000", padding: 30 }}>
-      <Text
-        style={{
-          color: "#fff",
-          fontSize: 26,
-          fontWeight: "700",
-          marginBottom: 12,
-        }}
-      >
-        Discover
-      </Text>
-
-      <TextInput
-        placeholder="نام سریال مورد نظر را وارد نمایید..."
-        placeholderTextColor="#777"
-        value={query}
-        onChangeText={setQuery}
-        style={{
-          backgroundColor: "#111",
-          color: "#fff",
-          padding: 14,
-          borderRadius: 12,
-          marginBottom: 20,
-        }}
-      />
-      <View style={styles.qualityRow}>
-        <Text style={{ color: "#ccc" }}>انتخاب کیفیت:</Text>
-        {QUALITIES.map((q) => (
-          <Pressable
-            key={q}
-            onPress={() => setQuality(q)}
-            style={[
-              styles.qualityBtn,
-              quality === q && styles.qualityBtnActive,
-            ]}
-          >
-            <Text style={styles.qualityText}>{q}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {loading && <ActivityIndicator style={{ marginTop: 10 }} />}
-
-      <FlatList
-        data={results}
-        keyExtractor={(item) => item.imdbID}
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
-        renderItem={({ item }) => (
-          <Pressable
-            style={styles.item}
-            onPress={() =>
-              navigation.navigate("Title", { imdbID: item.imdbID, quality })
-            }
-          >
-            <Text style={styles.title}>{item.title}</Text>
-
-            {!item.hasLink && (
-              <Text style={styles.noLink}>No download link</Text>
-            )}
-          </Pressable>
-        )}
-      />
-
-      <Text
-        style={{
-          color: "#fff",
-          fontSize: 18,
-          fontWeight: "600",
-          marginBottom: 12,
-        }}
-      >
-        Featured Series
-      </Text>
-
-      <FlatList
-        data={FEATURED_SERIES}
-        numColumns={2}
-        columnWrapperStyle={{ justifyContent: "space-between" }}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <SeriesCard
-            item={item}
-            onPress={() => console.log("Pressed:", item.title)}
-          />
-        )}
         showsVerticalScrollIndicator={false}
-      />
+      >
+        <View style={styles.topBar}>
+          <Text style={styles.discover}>IronBranch</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Profile")}
+            style={styles.profileBtn}
+          >
+            <Text style={styles.profileIcon}>👤</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.searchRow}>
+          <TextInput
+            ref={inputRef}
+            placeholder="نام سریال مورد نظر را وارد نمایید..."
+            placeholderTextColor="#777"
+            value={query}
+            onChangeText={setQuery}
+            style={styles.input}
+          />
+          {query.length > 0 && (
+            <Pressable onPress={() => setQuery("")} style={styles.clearBtn}>
+              <Text style={styles.clearText}>×</Text>
+            </Pressable>
+          )}
+        </View>
+
+        {searchLoading && (
+          <ActivityIndicator style={{ marginBottom: 10 }} color="#fff" />
+        )}
+
+        {isSearching &&
+          results.map((item) => (
+            <Pressable
+              key={item.id.toString()}
+              style={styles.item}
+              onPress={() =>
+                navigation.navigate("Title", { id: item.id, type: "tv" })
+              }
+            >
+              <Text style={styles.itemTitle}>
+                {item.name}{" "}
+                <Text style={{ color: "yellow" }}>{item.first_air_date}</Text>
+              </Text>
+            </Pressable>
+          ))}
+
+        {!isSearching && (
+          <>
+            <Text style={styles.sectionTitle}>جدیدترین سریال</Text>
+
+            {loading && (
+              <ActivityIndicator style={{ marginTop: 20 }} color="#fff" />
+            )}
+
+            <View style={styles.grid}>
+              {trendingSeries.map((item) => (
+                <Pressable
+                  key={item.id.toString()}
+                  onPress={() =>
+                    navigation.navigate("Title", { id: item.id, type: "tv" })
+                  }
+                  style={styles.card}
+                >
+                  <Image
+                    source={{ uri: getImageUrl(item.poster_path) }}
+                    style={styles.poster}
+                  />
+                  <TextTicker
+                    style={styles.cardTitle}
+                    duration={8000}
+                    loop
+                    bounce
+                    repeatSpacer={50}
+                    marqueeDelay={1000}
+                  >
+                    {item.name}
+                  </TextTicker>
+                  <Text style={styles.rating}>
+                    ⭐ {item.vote_average?.toFixed(1)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        )}
+      </ScrollView>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Open-source project. Contribute on GitHub.
+        </Text>
+
+        <Pressable
+          onPress={() =>
+            Linking.openURL(
+              "https://github.com/alirezaghnz/movie-tracker-native",
+            )
+          }
+          style={styles.githubBtn}
+        >
+          <Text style={styles.githubText}>View on GitHub</Text>
+        </Pressable>
+      </View>
       <FavoriteFab />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: "#000",
   },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 80,
+  },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 46,
+    marginBottom: 16,
+  },
+  discover: {
+    color: "#03a75a",
+    fontSize: 26,
+    fontWeight: "700",
+  },
+  profileBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#1a1a1a",
+    borderWidth: 1,
+    borderColor: "#333",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileIcon: {
+    fontSize: 20,
+  },
   input: {
-    backgroundColor: "#1c1c1c",
+    flex: 1,
     color: "#fff",
-    padding: 12,
-    borderRadius: 10,
-    fontSize: 16,
+    padding: 14,
+    fontFamily: "IRANSans",
+  },
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+    fontFamily: "IRANSans",
+    marginBottom: 12,
+    textAlign: "right",
   },
   item: {
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#222",
   },
-  title: {
+  itemTitle: {
     color: "#fff",
     fontSize: 15,
   },
-  noLink: {
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  card: {
+    width: "47%",
+    marginBottom: 20,
+  },
+  poster: {
+    width: "100%",
+    height: 220,
+    borderRadius: 10,
+  },
+  cardTitle: {
+    fontWeight: "bold",
+    marginTop: 6,
+    color: "#fff",
+    fontSize: 13,
+  },
+  rating: {
     color: "#888",
     fontSize: 12,
     marginTop: 2,
   },
-  qualityRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 16,
+  footer: {
+    paddingTop: 5,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#222",
+    alignItems: "center",
   },
-  qualityBtn: {
+
+  footerText: {
+    color: "#888",
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 2,
+  },
+
+  githubBtn: {
+    backgroundColor: "#111",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#444",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginRight: 6,
-    marginBottom: 6,
+    borderColor: "#333",
   },
-  qualityBtnActive: {
-    backgroundColor: "#eeeb3f",
-    borderColor: "#000000",
+
+  githubText: {
+    color: "#fff",
+    fontSize: 13,
   },
-  qualityText: {
-    color: "#ffffff",
-    fontSize: 12,
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#222",
+    marginBottom: 16,
+    paddingRight: 8,
+  },
+  clearBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: "#ac3030",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  clearText: {
+    color: "#a51010",
+    fontSize: 18,
+    fontWeight: "bold",
+    lineHeight: 12,
   },
 });
