@@ -14,12 +14,15 @@ import { useNavigation } from "@react-navigation/native";
 import { useFavorites } from "../hooks/useFavorites";
 import { useCallback, useRef, useState } from "react";
 import { Swipeable } from "react-native-gesture-handler";
+import SwipeDeleteAction from "../components/SwipeDeleteAction";
+import ErrorModal from "../components/ErrorModal";
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 export function FavoriteScreen() {
   const { favorites = [], removeFavorite, clearFavorites } = useFavorites();
   const [selectedItems, setSelectedItems] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -37,27 +40,8 @@ export function FavoriteScreen() {
   );
 
   const handleClearAll = useCallback(() => {
-    Alert.alert(
-      "حذف همه",
-      "آیا از حذف همه علاقه‌مندی‌ها اطمینان دارید؟",
-      [
-        { text: "لغو", style: "cancel" },
-        {
-          text: "حذف",
-          style: "destructive",
-          onPress: async () => {
-            setIsLoading(true);
-            try {
-              await clearFavorites();
-            } finally {
-              setIsLoading(false);
-            }
-          },
-        },
-      ],
-      { cancelable: true },
-    );
-  }, [clearFavorites]);
+    setShowConfirmClear(true);
+  }, []);
 
   const toggleSelectItem = useCallback(
     (imdbID) => {
@@ -98,22 +82,13 @@ export function FavoriteScreen() {
 
   const renderRightActions = useCallback(
     (progress, dragX, imdbID) => {
-      const scale = dragX.interpolate({
-        inputRange: [-100, 0],
-        outputRange: [1, 0],
-        extrapolate: "clamp",
-      });
-
       return (
-        <Pressable
-          style={styles.deleteBox}
-          onPress={() => handleRemoveItem(imdbID)}
+        <SwipeDeleteAction
+          dragX={dragX}
+          onDelete={() => handleRemoveItem(imdbID)}
         >
-          <Animated.View style={{ transform: [{ scale }] }}>
-            <MaterialIcons name="delete" size={24} color="#fff" />
-            <Text style={styles.deleteText}>حذف</Text>
-          </Animated.View>
-        </Pressable>
+          حذف
+        </SwipeDeleteAction>
       );
     },
     [handleRemoveItem],
@@ -215,14 +190,13 @@ export function FavoriteScreen() {
         outputRange: [1, 1, 1, 0],
       });
 
-      const isSelected = selectedItems.includes(item.imdbID);
+      const isSelected = selectedItems.includes(item.id);
 
       return (
         <Animated.View style={{ transform: [{ scale }] }}>
           <Swipeable
             renderRightActions={(progress, dragX) =>
-              !isSelectionMode &&
-              renderRightActions(progress, dragX, item.imdbID)
+              !isSelectionMode && renderRightActions(progress, dragX, item.id)
             }
             overshootRight={false}
           >
@@ -230,15 +204,15 @@ export function FavoriteScreen() {
               style={[styles.item, isSelected && styles.selectedItem]}
               onPress={() => {
                 if (isSelectionMode) {
-                  toggleSelectItem(item.imdbID);
+                  toggleSelectItem(item.id);
                 } else {
-                  navigation.navigate("Title", { imdbID: item.imdbID });
+                  navigation.navigate("Title", { id: item.id, type: "tv" });
                 }
               }}
               onLongPress={() => {
                 if (!isSelectionMode) {
                   setIsSelectionMode(true);
-                  toggleSelectItem(item.imdbID);
+                  toggleSelectItem(item.id);
                 }
               }}
             >
@@ -255,11 +229,13 @@ export function FavoriteScreen() {
               <View style={styles.itemContent}>
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemTitle} numberOfLines={2}>
-                    {item.title}
+                    {item.name || item.title}
                   </Text>
                   {item.year && (
                     <View style={styles.yearBadge}>
-                      <Text style={styles.yearText}>{item.year}</Text>
+                      <Text style={styles.yearText}>
+                        {item.year.substring(0, 4)}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -310,7 +286,7 @@ export function FavoriteScreen() {
       <HeaderComponent />
       <AnimatedFlatList
         data={favorites}
-        keyExtractor={(item, index) => item?.imdbID ?? String(index)}
+        keyExtractor={(item, index) => item?.id ?? String(index)}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -325,6 +301,14 @@ export function FavoriteScreen() {
           <ActivityIndicator size="large" color="#e50914" />
         </View>
       )}
+      <ErrorModal
+        isVisible={showConfirmClear}
+        onClose={() => setShowConfirmClear(false)}
+        handleClearFavorites={async () => {
+          await clearFavorites();
+          setShowConfirmClear(false);
+        }}
+      />
     </View>
   );
 }
@@ -351,13 +335,14 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: "#ffee00",
-    fontSize: 28,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontFamily: "IRANSans",
     writingDirection: "rtl",
   },
   headerCount: {
     color: "#999",
     fontSize: 14,
+    fontFamily: "IRANSans",
     backgroundColor: "#1a1a1a",
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -436,7 +421,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   yearText: {
-    color: "#999",
+    color: "#c5f31d",
     fontSize: 12,
   },
   poster: {
@@ -444,22 +429,6 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 6,
     marginLeft: 12,
-  },
-  deleteBox: {
-    backgroundColor: "#ff4444",
-    justifyContent: "center",
-    alignItems: "center",
-    width: 80,
-    height: "82%",
-
-    marginBottom: 12,
-    borderEndEndRadius: 12,
-    borderTopEndRadius: 12,
-  },
-  deleteText: {
-    color: "#fff",
-    fontSize: 12,
-    marginTop: 4,
   },
   emptyContainer: {
     flex: 1,
@@ -481,7 +450,8 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     color: "#666",
-    fontSize: 16,
+    fontFamily: "IRANSans",
+    fontSize: 12,
     textAlign: "center",
     marginBottom: 30,
     writingDirection: "rtl",
@@ -497,6 +467,7 @@ const styles = StyleSheet.create({
   exploreButtonText: {
     color: "#fff",
     fontSize: 16,
+
     fontWeight: "bold",
     marginRight: 8,
     writingDirection: "rtl",

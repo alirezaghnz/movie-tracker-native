@@ -23,10 +23,10 @@ export async function saveFavorites(list) {
 
   // Otherwise treat `list` as a single favorite item and toggle it.
   const favorites = await getFavorites();
-  const exist = favorites.find((f) => f.imdbID === list.imdbID);
+  const exist = favorites.find((f) => f.id === list.tmdbId);
   let updated;
   if (exist) {
-    updated = favorites.filter((f) => f.imdbID !== list.imdbID);
+    updated = favorites.filter((f) => f.id !== list.tmdbId);
   } else {
     updated = [...favorites, list];
   }
