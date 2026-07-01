@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { BackButton } from "../components/BackButton";
 
 export default function ProfileScreen() {
   const [token, setToken] = useState("");
@@ -35,6 +36,10 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={{ top: 40, left: 10 }}>
+        <BackButton />
+      </View>
+
       <Text style={styles.title}>پروفایل</Text>
 
       <View style={styles.card}>

@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -21,6 +22,7 @@ import {
   getTVSeasonsDetails,
 } from "../services/api/tmdb";
 import ErrorContainer from "../components/ErrorContainer";
+import { BackButton } from "../components/BackButton";
 
 export default function TitleScreen() {
   const route = useRoute();
@@ -116,73 +118,69 @@ export default function TitleScreen() {
         </TouchableOpacity>
       </View>
       */}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.posterContainer}>
+          <Image
+            source={{ uri: getImageUrl(details?.backdrop_path) }}
+            style={styles.poster}
+          />
+          <View style={styles.backButton}>
+            <BackButton />
+          </View>
 
-      {episodeLoading && <ActivityIndicator style={{ marginVertical: 10 }} />}
-      <FlatList
-        data={seasonData?.episodes}
-        keyExtractor={(item) => `${id}-${season}-${item.episode_number}`}
-        contentContainerStyle={{ paddingBottom: 40 }}
-        ListHeaderComponent={
-          <>
-            <View style={styles.posterContainer}>
-              <Image
-                source={{ uri: getImageUrl(details?.backdrop_path) }}
-                style={styles.poster}
-              />
-              <View style={styles.favoriteButton}>
-                <FavoriteStar
-                  active={isFavorite(details?.id)}
-                  onPress={() =>
-                    toggleFavorite({
-                      id: details?.id,
-                      title: details?.name,
-                      year: details?.first_air_date,
-                      poster_path: details?.poster_path,
-                    })
-                  }
-                />
-              </View>
+          <View style={styles.favoriteButton}>
+            <FavoriteStar
+              active={isFavorite(details?.id)}
+              onPress={() =>
+                toggleFavorite({
+                  id: details?.id,
+                  title: details?.name,
+                  year: details?.first_air_date,
+                  poster_path: details?.poster_path,
+                })
+              }
+            />
+          </View>
 
-              <View style={styles.posterOverlay}>
-                <View style={styles.genresRow}>
-                  {details?.genres.map((g, index) => (
-                    <View key={`${g}-${index}`} style={styles.genreBadge}>
-                      <Text style={styles.genreText}>{g.name}</Text>
-                    </View>
-                  ))}
+          <View style={styles.posterOverlay}>
+            <View style={styles.genresRow}>
+              {details?.genres.map((g, index) => (
+                <View key={`${g}-${index}`} style={styles.genreBadge}>
+                  <Text style={styles.genreText}>{g.name}</Text>
                 </View>
-                <Text style={styles.title}>{details?.name}</Text>
-                <View style={styles.metaRow}>
-                  <Text style={styles.year}>{details?.first_air_date}</Text>
-                </View>
-              </View>
+              ))}
             </View>
-
-            {!!details?.overview && (
-              <Text style={styles.plot}>{details?.overview}</Text>
-            )}
-            {!!details?.origin_country && (
-              <Text style={styles.country}>{details?.origin_country}</Text>
-            )}
-
-            <View style={{ zIndex: 1000, elevation: 1000 }}>
-              <DropdownSelect
-                label="انتخاب فصل"
-                value={seasonName}
-                options={seasonOptions}
-                onChange={handleSeasonChange}
-              />
+            <Text style={styles.title}>{details?.name}</Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.year}>{details?.first_air_date}</Text>
             </View>
-          </>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.episodeCard}>
+          </View>
+        </View>
+        {!!details?.overview && (
+          <Text style={styles.plot}>{details?.overview}</Text>
+        )}
+
+        <View style={{ zIndex: 100, paddingHorizontal: 16, marginBottom: 8 }}>
+          <DropdownSelect
+            label="انتخاب فصل"
+            value={seasonName}
+            options={seasonOptions}
+            onChange={handleSeasonChange}
+          />
+        </View>
+
+        {episodeLoading && <ActivityIndicator style={{ marginVertical: 10 }} />}
+
+        {seasonData?.episodes?.map((item) => (
+          <View
+            key={`${id}-${season}-${item.episode_number}`}
+            style={[styles.episodeCard, { marginHorizontal: 16 }]}
+          >
             <View style={styles.episodeInfo}>
               <Text style={styles.episodeText}>
                 قسمت {item.episode_number} - {item.name}
               </Text>
             </View>
-
             <View style={styles.actions}>
               <Pressable
                 style={styles.watchBtn}
@@ -195,21 +193,12 @@ export default function TitleScreen() {
                   })
                 }
               >
-                <Text style={styles.watchText}> پخش ▶</Text>
+                <Text style={styles.watchText}>پخش ▶</Text>
               </Pressable>
-
-              {/*
-              <Pressable
-                style={styles.downloadBtn}
-                onPress={() => downloadWithAdm(item.streamUrl)}
-              >
-                <Text style={styles.downloadText}>⬇ دانلود</Text>
-              </Pressable>
-              */}
             </View>
           </View>
-        )}
-      />
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -232,6 +221,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 40,
     right: 16,
+    zIndex: 10,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 999,
+  },
+  backButton: {
+    position: "absolute",
+    top: 40,
+    left: 10,
     zIndex: 10,
     backgroundColor: "rgba(0,0,0,0.5)",
     borderRadius: 999,

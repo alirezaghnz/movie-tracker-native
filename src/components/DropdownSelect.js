@@ -99,6 +99,8 @@ const styles = StyleSheet.create({
     top: 48,
     left: 0,
     right: 0,
+    zIndex: 9999,
+    elevation: 9999,
     backgroundColor: "#111",
     borderRadius: 10,
     borderWidth: 1,
