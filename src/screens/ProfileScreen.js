@@ -8,6 +8,8 @@ import {
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { BackButton } from "../components/BackButton";
+import { UpdateChecker } from "../components/UpdateChecker";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function ProfileScreen() {
   const [token, setToken] = useState("");
@@ -60,6 +62,18 @@ export default function ProfileScreen() {
           این توکن به صورت امن روی دستگاه شما ذخیره شده است.
         </Text>
       </View>
+
+      <View style={styles.updateContainer}>
+        <View style={styles.updateHeader}>
+          <Text style={styles.updateLabel}>آپدیت برنامه</Text>
+
+          <MaterialIcons name="update" size={22} color="white" />
+        </View>
+        <Text style={styles.updateSubLabel}>
+          برای بررسی وجود نسخه جدید دکمه زیر را بزنید
+        </Text>
+        <UpdateChecker />
+      </View>
     </View>
   );
 }
@@ -108,5 +122,34 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: "right",
     lineHeight: 20,
+  },
+  updateContainer: {
+    padding: 18,
+    backgroundColor: "#161616",
+    marginTop: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#242424",
+  },
+  updateHeader: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  updateLabel: {
+    textAlign: "right",
+    color: "#fff",
+    fontFamily: "IRANSans",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  updateSubLabel: {
+    color: "#666",
+    fontSize: 11,
+    fontFamily: "IRANSans",
+    textAlign: "right",
+    marginBottom: 4,
   },
 });
