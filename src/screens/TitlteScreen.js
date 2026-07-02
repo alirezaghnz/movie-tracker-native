@@ -2,7 +2,6 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   Image,
   Pressable,
   ScrollView,
@@ -12,6 +11,7 @@ import {
 } from "react-native";
 
 import DropdownSelect from "../components/DropdownSelect";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 import { useFavorites } from "../hooks/useFavorites";
 import { FavoriteStar } from "../components/FavoriteStar";
@@ -153,6 +153,19 @@ export default function TitleScreen() {
             <Text style={styles.title}>{details?.name}</Text>
             <View style={styles.metaRow}>
               <Text style={styles.year}>{details?.first_air_date}</Text>
+              <Text style={styles.detailsRating}>
+                <FontAwesome name="star" size={15} color="yellow" />
+                {details?.vote_average?.toFixed(1)}
+              </Text>
+              {details?.number_of_seasons > 0 && (
+                <Text style={styles.seasonCount}>
+                  {details?.number_of_seasons} Season
+                  {details?.number_of_seasons !== 1 ? "s" : ""}
+                </Text>
+              )}
+              <Text style={{ color: "#c0c0c0" }}>
+                {details?.number_of_episodes} Episodes
+              </Text>
             </View>
           </View>
         </View>
@@ -252,6 +265,8 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     marginTop: 10,
+    gap: 20,
+    alignItems: "center",
   },
   year: {
     backgroundColor: "#e50914",
@@ -261,7 +276,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
   },
-
+  detailsRating: {
+    color: "yellow",
+  },
+  seasonCount: {
+    color: "#c0c0c0",
+  },
   genresRow: {
     flexDirection: "row-reverse",
     flexWrap: "wrap",
