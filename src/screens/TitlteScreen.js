@@ -24,6 +24,12 @@ import {
 import ErrorContainer from "../components/ErrorContainer";
 import { BackButton } from "../components/BackButton";
 
+const TODAY = (() => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+})();
+
 export default function TitleScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -35,6 +41,7 @@ export default function TitleScreen() {
   const [seasonName, setSeasonName] = useState("");
   const [seasonData, setSeasonData] = useState(null);
   const [episodeLoading, setEpisodeLoading] = useState(false);
+  const [expandedOverview, setExpandedOverview] = useState({});
   const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
@@ -184,33 +191,85 @@ export default function TitleScreen() {
 
         {episodeLoading && <ActivityIndicator style={{ marginVertical: 10 }} />}
 
-        {seasonData?.episodes?.map((item) => (
-          <View
-            key={`${id}-${season}-${item.episode_number}`}
-            style={[styles.episodeCard, { marginHorizontal: 16 }]}
-          >
-            <View style={styles.episodeInfo}>
-              <Text style={styles.episodeText}>
-                قسمت {item.episode_number} - {item.name}
-              </Text>
-            </View>
-            <View style={styles.actions}>
+        {seasonData?.episodes?.map((item) => {
+          const isUnreleased = item.air_date
+            ? new Date(item.air_date) > TODAY
+            : false;
+          return (
+            <View
+              key={`${id}-${season}-${item.episode_number}`}
+              style={[
+                styles.episodeCard,
+                { marginHorizontal: 16 },
+                isUnreleased && styles.episodeCardUnreleased,
+              ]}
+            >
+              <View>
+                {item.still_path ? (
+                  <Image
+                    style={styles.episodeImage}
+                    source={{ uri: getImageUrl(item.still_path, "w500") }}
+                  />
+                ) : (
+                  <View style={styles.episodeImagePlaceholder} />
+                )}
+                {isUnreleased && (
+                  <View style={styles.lockOverlay}>
+                    <FontAwesome name="lock" size={28} color="#fff" />
+                    <Text style={styles.lockDate}>{item.air_date}</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.episodeInfo}>
+                <Text style={styles.episdoeNumber}>
+                  قسمت {item.episode_number}
+                </Text>
+                <Text style={styles.episodeTitle} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                {!!item.overview && (
+                  <Text
+                    style={styles.episodeOverview}
+                    numberOfLines={
+                      expandedOverview[item.episode_number] ? undefined : 2
+                    }
+                    onPress={() =>
+                      setExpandedOverview((prev) => ({
+                        ...prev,
+                        [item.episode_number]: !prev[item.episode_number],
+                      }))
+                    }
+                  >
+                    {item.overview}
+                  </Text>
+                )}
+              </View>
+
               <Pressable
-                style={styles.watchBtn}
-                onPress={() =>
+                style={[
+                  styles.watchBtn,
+                  isUnreleased && styles.watchBtnDisabled,
+                ]}
+                onPress={() => {
+                  if (isUnreleased) return;
                   navigation.navigate("Player", {
                     id,
                     type: "tv",
                     season,
                     ep: item.episode_number,
-                  })
-                }
+                  });
+                }}
+                disabled={isUnreleased}
               >
-                <Text style={styles.watchText}>پخش ▶</Text>
+                <Text style={styles.watchText}>
+                  {" "}
+                  {isUnreleased ? " منتشر نشده 🔒" : "پخش ▶"}
+                </Text>
               </Pressable>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -261,6 +320,21 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     padding: 16,
     backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  episodeCardUnreleased: {
+    opacity: 0.5,
+  },
+  lockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  lockDate: {
+    color: "#fff",
+    fontSize: 12,
+    fontFamily: "IRANSans",
   },
   metaRow: {
     flexDirection: "row",
@@ -315,40 +389,65 @@ const styles = StyleSheet.create({
   },
 
   episodeCard: {
-    backgroundColor: "#111",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
+    backgroundColor: "#222222",
+    borderRadius: 5,
+    overflow: "hidden",
+    marginBottom: 16,
   },
-
+  episodeImage: {
+    width: "100%",
+    height: 180,
+    backgroundColor: "#1a1a1a",
+  },
+  episodeImagePlaceholder: {
+    width: "100%",
+    height: 180,
+    backgroundColor: "#1a1a1a",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   episodeInfo: {
-    flexDirection: "row-reverse",
-    justifyContent: "space-between",
-    marginBottom: 10,
+    padding: 12,
   },
 
-  episodeText: {
+  episdoeNumber: {
+    color: "#e50914",
+    fontSize: 12,
+    fontFamily: "IRANSans",
+    marginBottom: 4,
+    textAlign: "right",
+  },
+  episodeTitle: {
     color: "#fff",
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     fontFamily: "IRANSans",
+
+    marginBottom: 6,
+  },
+  episodeOverview: {
+    color: "#888",
+    fontSize: 12,
+    fontFamily: "IRANSans",
+    lineHeight: 20,
   },
 
   watchBtn: {
     backgroundColor: "#e50914",
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    marginHorizontal: 12,
+    marginBottom: 12,
     borderRadius: 10,
-    marginLeft: 10,
-    width: "100%",
-    justifyContent: "center",
     alignItems: "center",
   },
-
+  watchBtnDisabled: {
+    backgroundColor: "#333",
+  },
   watchText: {
     color: "#fff",
     fontSize: 14,
     fontFamily: "IRANSans",
+    fontWeight: "600",
   },
 
   downloadBtn: {
