@@ -14,13 +14,20 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
 import FavoriteFab from "../components/FavoriteFab";
-import { getImageUrl, getTrending, searchTV } from "../services/api/tmdb";
+import {
+  getImageUrl,
+  getTopRatedTV,
+  getTrending,
+  searchTV,
+} from "../services/api/tmdb";
 import TextTicker from "react-native-text-ticker";
+import TopRatedSlider from "../components/TopRatedSlider";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const [query, setQuery] = useState("");
   const [trendingSeries, setTrendingSeries] = useState([]);
+  const [topRated, setTopRated] = useState([]);
   const [results, setResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -33,6 +40,11 @@ export default function HomeScreen() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    getTopRatedTV()
+      .then((data) => setTopRated(data.results?.slice(0, 10) ?? []))
+      .catch(console.erro);
+  }, []);
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
@@ -111,7 +123,8 @@ export default function HomeScreen() {
                       textAlign: "right",
                     }}
                   >
-                    {item.first_air_date.substring(0, 4)}
+                    ({item.first_air_date.substring(0, 4)}) . IMDB ⭐{" "}
+                    {item.vote_average?.toFixed(1)}
                   </Text>
                 </Text>
               </View>
@@ -120,6 +133,7 @@ export default function HomeScreen() {
 
         {!isSearching && (
           <>
+            <TopRatedSlider data={topRated} />
             <Text style={styles.sectionTitle}>جدیدترین سریال</Text>
 
             {loading && (

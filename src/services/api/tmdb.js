@@ -63,3 +63,6 @@ export const getTVSeasonsDetails = (tvId, seasonNumber) => {
 export const searchTV = (query) => {
   return fetchTMDB(`/search/tv?query=${encodeURIComponent(query)}`);
 };
+export const getTopRatedTV = () => {
+  return fetchTMDB("/tv/top_rated?page=1");
+};
