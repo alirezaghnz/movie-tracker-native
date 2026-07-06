@@ -173,6 +173,17 @@ export default function TitleScreen() {
               <Text style={{ color: "#c0c0c0" }}>
                 {details?.number_of_episodes} Episodes
               </Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 10,
+                  backgroundColor: "green",
+                  padding: 2,
+                  borderRadius: 6,
+                }}
+              >
+                {details?.status}
+              </Text>
             </View>
           </View>
         </View>
@@ -258,6 +269,7 @@ export default function TitleScreen() {
                     type: "tv",
                     season,
                     ep: item.episode_number,
+                    episodes: seasonData?.episodes ?? [],
                   });
                 }}
                 disabled={isUnreleased}
@@ -339,7 +351,7 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     marginTop: 10,
-    gap: 20,
+    gap: 10,
     alignItems: "center",
   },
   year: {
