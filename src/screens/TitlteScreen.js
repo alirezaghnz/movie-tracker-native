@@ -98,8 +98,28 @@ export default function TitleScreen() {
     }
   };
 */
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.posterSkeleton} />
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} />;
+        <View style={styles.content}>
+          <View style={styles.titleSkeleton} />
+          <View style={styles.metaSkeleton} />
+
+          <View style={styles.overviewSkeleton} />
+          <View style={styles.overviewSkeleton} />
+          <View style={styles.overviewSkeletonShort} />
+
+          <View style={styles.dropdownSkeleton} />
+
+          <View style={styles.episodeSkeleton} />
+          <View style={styles.episodeSkeleton} />
+          <View style={styles.episodeSkeleton} />
+        </View>
+      </View>
+    );
+  }
   if (!details) return <ErrorContainer />;
 
   return (
@@ -501,5 +521,57 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 9,
+  },
+  posterSkeleton: {
+    height: 350,
+    backgroundColor: "#181818",
+  },
+
+  content: {
+    padding: 16,
+  },
+
+  titleSkeleton: {
+    width: "60%",
+    height: 30,
+    backgroundColor: "#222",
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+
+  metaSkeleton: {
+    width: "40%",
+    height: 16,
+    backgroundColor: "#222",
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+
+  overviewSkeleton: {
+    width: "100%",
+    height: 14,
+    backgroundColor: "#222",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+
+  overviewSkeletonShort: {
+    width: "70%",
+    height: 14,
+    backgroundColor: "#222",
+    borderRadius: 8,
+    marginBottom: 24,
+  },
+  episodeSkeleton: {
+    height: 280,
+    backgroundColor: "#222",
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  dropdownSkeleton: {
+    height: 52,
+    backgroundColor: "#222",
+    borderRadius: 12,
+    marginBottom: 20,
   },
 });
