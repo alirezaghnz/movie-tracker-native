@@ -105,7 +105,10 @@ export default function HomeScreen() {
               key={item.id.toString()}
               style={styles.item}
               onPress={() =>
-                navigation.navigate("Title", { id: item.id, type: "tv" })
+                navigation.navigate("Title", {
+                  id: item.id,
+                  type: "tv",
+                })
               }
             >
               <Image
