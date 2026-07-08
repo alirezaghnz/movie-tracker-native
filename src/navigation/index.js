@@ -9,7 +9,14 @@ const Stack = createNativeStackNavigator();
 
 export default function MainNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: {
+          backgroundColor: "#000",
+        },
+      }}
+    >
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Title" component={TitleScreen} />
       <Stack.Screen name="Player" component={PlayerScreen} />
