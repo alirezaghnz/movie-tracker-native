@@ -32,6 +32,10 @@ export function AlertProvider({ children }) {
   };
 
   const hideAlert = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     Animated.timing(translateY, {
       toValue: -150,
       duration: 220,
@@ -54,6 +58,7 @@ export function AlertProvider({ children }) {
           {alert && (
             <Animated.View
               style={[styles.wrapper, { transform: [{ translateY }] }]}
+              pointerEvents="box-none"
             >
               <Pressable
                 onPress={hideAlert}
