@@ -18,12 +18,6 @@ A free & open-source Android app to stream any TV series in the world. Zero ads,
 
 ---
 
-## Screenshots
-
-> Coming soon
-
----
-
 ## Streaming
 
 IronBranch gets video streams from third-party providers.
