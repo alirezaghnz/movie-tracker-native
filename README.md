@@ -92,6 +92,7 @@ This project is open-source software licensed under the [MIT License](LICENSE).
 - All content is sourced from third-party providers
 - Users are solely responsible for ensuring they have legal rights to access any content
 - The developer does not endorse or encourage copyright infringement
+- This app functions as a search engine aggregator only
 - Users must comply with all applicable laws in their jurisdiction
 - No copyrighted material is stored on the developer's side
 
