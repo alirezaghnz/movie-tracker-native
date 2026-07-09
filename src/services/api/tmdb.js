@@ -22,9 +22,15 @@ const fetchTMDB = async (endpoint) => {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
   };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, { headers });
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
 
     if (res.status === 401 || res.status === 403) {
       _onAuthError?.();

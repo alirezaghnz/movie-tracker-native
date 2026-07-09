@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Linking,
+  FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
@@ -31,12 +32,13 @@ export default function HomeScreen() {
   const [results, setResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const inputRef = useRef(null); // for focus on input
 
   useEffect(() => {
     getTrending("tv", "day")
       .then((data) => setTrendingSeries(data.results))
-      .catch(console.error)
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -61,6 +63,8 @@ export default function HomeScreen() {
   }, [query]);
 
   const isSearching = query.trim().length > 0;
+  {
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -134,46 +138,73 @@ export default function HomeScreen() {
             </Pressable>
           ))}
 
-        {!isSearching && (
-          <>
-            <TopRatedSlider data={topRated} />
-            <Text style={styles.sectionTitle}>جدیدترین سریال</Text>
-
-            {loading && (
-              <ActivityIndicator style={{ marginTop: 20 }} color="#fff" />
-            )}
-
-            <View style={styles.grid}>
-              {trendingSeries.map((item) => (
-                <Pressable
-                  key={item.id.toString()}
-                  onPress={() =>
-                    navigation.navigate("Title", { id: item.id, type: "tv" })
-                  }
-                  style={styles.card}
-                >
-                  <Image
-                    source={{ uri: getImageUrl(item.poster_path) }}
-                    style={styles.poster}
-                  />
-                  <TextTicker
-                    style={styles.cardTitle}
-                    duration={8000}
-                    loop
-                    bounce
-                    repeatSpacer={50}
-                    marqueeDelay={1000}
-                  >
-                    {item.name}
-                  </TextTicker>
-                  <Text style={styles.rating}>
-                    ⭐ {item.vote_average?.toFixed(1)}
-                  </Text>
-                </Pressable>
-              ))}
+        {!isSearching &&
+          (error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorIcon}>📡</Text>
+              <Text style={styles.errorTitle}>اتصال برقرار نشد. </Text>
+              <Text style={styles.errorSubtitle}>
+                اینترنت یا فیلترشکن خود را بررسی کنید.
+              </Text>
+              <Pressable
+                style={styles.retryBtn}
+                onPress={() => {
+                  setError(false);
+                  setLoading(true);
+                  Promise.all([getTrending("tv", "day"), getTopRatedTV()])
+                    .then(([trending, topRatedData]) => {
+                      setTrendingSeries(trending.results);
+                      setTopRated(topRatedData.results?.slice(0, 10) ?? []);
+                    })
+                    .catch(() => setError(true))
+                    .finally(() => setLoading(false));
+                }}
+              >
+                <Text style={styles.retryText}>تلاش مجدد</Text>
+              </Pressable>
             </View>
-          </>
-        )}
+          ) : loading ? (
+            <ActivityIndicator style={{ marginTop: 20 }} color="#fff" />
+          ) : (
+            <>
+              <TopRatedSlider data={topRated} />
+              <Text style={styles.sectionTitle}>جدیدترین سریال</Text>
+
+              <FlatList
+                data={trendingSeries}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={{ paddingHorizontal: 4, gap: 12 }}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() =>
+                      navigation.navigate("Title", { id: item.id, type: "tv" })
+                    }
+                    style={styles.card}
+                  >
+                    <Image
+                      source={{ uri: getImageUrl(item.poster_path) }}
+                      style={styles.poster}
+                    />
+                    <TextTicker
+                      style={styles.cardTitle}
+                      duration={8000}
+                      loop
+                      bounce
+                      repeatSpacer={50}
+                      marqueeDelay={1000}
+                    >
+                      {item.name}
+                    </TextTicker>
+                    <Text style={styles.rating}>
+                      ⭐ {item.vote_average?.toFixed(1)}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            </>
+          ))}
       </ScrollView>
       <View style={styles.footer}>
         <Text style={styles.footerText}>
@@ -264,18 +295,14 @@ const styles = StyleSheet.create({
     textAlign: "left",
     writingDirection: "ltr",
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
+
   card: {
-    width: "47%",
+    width: 140,
     marginBottom: 20,
   },
   poster: {
-    width: "100%",
-    height: 220,
+    width: 140,
+    height: 200,
     borderRadius: 10,
   },
   cardTitle: {
@@ -342,5 +369,41 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     lineHeight: 12,
+  },
+  errorContainer: {
+    alignItems: "center",
+    paddingTop: 60,
+    gap: 12,
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+
+  errorTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "IRANSans",
+  },
+  errorSubtitle: {
+    color: "#666",
+    fontSize: 12,
+    fontFamily: "IRANSans",
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  retryBtn: {
+    marginTop: 16,
+    backgroundColor: "#1a1a1a",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  retryText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "IRANSans",
   },
 });
