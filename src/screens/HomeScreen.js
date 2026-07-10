@@ -206,23 +206,6 @@ export default function HomeScreen() {
             </>
           ))}
       </ScrollView>
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Open-source project. Contribute on GitHub.
-        </Text>
-
-        <Pressable
-          onPress={() =>
-            Linking.openURL(
-              "https://github.com/alirezaghnz/movie-tracker-native",
-            )
-          }
-          style={styles.githubBtn}
-        >
-          <Text style={styles.githubText}>View on GitHub</Text>
-        </Pressable>
-      </View>
-      <FavoriteFab />
     </SafeAreaView>
   );
 }
