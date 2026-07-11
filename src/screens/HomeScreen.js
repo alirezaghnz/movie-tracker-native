@@ -86,7 +86,7 @@ export default function HomeScreen() {
         <View style={styles.searchRow}>
           <TextInput
             ref={inputRef}
-            placeholder="نام سریال مورد نظر را وارد نمایید..."
+            placeholder="Search movies and series..."
             placeholderTextColor="#777"
             value={query}
             onChangeText={setQuery}
@@ -168,7 +168,10 @@ export default function HomeScreen() {
           ) : (
             <>
               <TopRatedSlider data={topRated} />
-              <Text style={styles.sectionTitle}>جدیدترین سریال</Text>
+              <View style={styles.sectionTitleHeader}>
+                <Text style={styles.sectionTitle}>Trending Series</Text>
+                <View style={styles.sectionLine} />
+              </View>
 
               <FlatList
                 data={trendingSeries}
@@ -227,9 +230,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   discover: {
-    color: "#03a75a",
+    color: "#215ecf",
     fontSize: 26,
-    fontWeight: "700",
+    fontFamily: "Bebas",
   },
   profileBtn: {
     width: 40,
@@ -248,15 +251,22 @@ const styles = StyleSheet.create({
     flex: 1,
     color: "#fff",
     padding: 14,
-    fontFamily: "IRANSans",
+  },
+  sectionTitleHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
   },
   sectionTitle: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-    fontFamily: "IRANSans",
-    marginBottom: 12,
-    textAlign: "right",
+    fontSize: 32,
+    fontFamily: "Bebas",
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#222",
   },
   item: {
     flexDirection: "row-reverse",
@@ -332,7 +342,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#111",
-    borderRadius: 12,
+    borderRadius: 30,
     borderWidth: 1,
     borderColor: "#222",
     marginBottom: 16,
