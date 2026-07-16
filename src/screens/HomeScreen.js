@@ -9,16 +9,15 @@ import {
   Image,
   SafeAreaView,
   TouchableOpacity,
-  Linking,
   FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
-import FavoriteFab from "../components/FavoriteFab";
 import {
   getImageUrl,
   getTopRatedTV,
   getTrending,
+  searchAll,
   searchTV,
 } from "../services/api/tmdb";
 import TextTicker from "react-native-text-ticker";
@@ -28,6 +27,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const [query, setQuery] = useState("");
   const [trendingSeries, setTrendingSeries] = useState([]);
+  const [trendingMovies, setTrendingMovies] = useState([]);
   const [topRated, setTopRated] = useState([]);
   const [results, setResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -36,8 +36,11 @@ export default function HomeScreen() {
   const inputRef = useRef(null); // for focus on input
 
   useEffect(() => {
-    getTrending("tv", "day")
-      .then((data) => setTrendingSeries(data.results))
+    Promise.all([getTrending("tv", "day"), getTrending("movie", "day")])
+      .then(([tvData, movieData]) => {
+        setTrendingSeries(tvData.results);
+        setTrendingMovies(movieData.results);
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
@@ -54,8 +57,13 @@ export default function HomeScreen() {
     }
     setSearchLoading(true);
     const timeout = setTimeout(() => {
-      searchTV(query)
-        .then((data) => setResults(data.results))
+      searchAll(query)
+        .then((data) => {
+          const filtered = data.results.filter(
+            (item) => item.media_type === "movie" || item.media_type === "tv",
+          );
+          setResults(filtered);
+        })
         .catch(console.error)
         .finally(() => setSearchLoading(false));
     }, 500);
@@ -63,8 +71,6 @@ export default function HomeScreen() {
   }, [query]);
 
   const isSearching = query.trim().length > 0;
-  {
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -111,7 +117,7 @@ export default function HomeScreen() {
               onPress={() =>
                 navigation.navigate("Title", {
                   id: item.id,
-                  type: "tv",
+                  type: item.media_type,
                 })
               }
             >
@@ -120,8 +126,18 @@ export default function HomeScreen() {
                 style={styles.searchPoster}
               />
               <View style={{ flex: 1 }}>
-                <Text style={styles.itemTitle}>
-                  {item.name}{" "}
+                <Text style={styles.itemTitle}>{item.name || item.title} </Text>
+                <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
+                  <Text
+                    style={[
+                      styles.typeBadge,
+                      item.media_type === "movie"
+                        ? styles.movieBadge
+                        : styles.tvBadge,
+                    ]}
+                  >
+                    {item.media_type === "movie" ? "Movie🎬" : "Series📺"}
+                  </Text>
                   <Text
                     style={{
                       color: "yellow",
@@ -130,10 +146,11 @@ export default function HomeScreen() {
                       textAlign: "right",
                     }}
                   >
-                    ({item.first_air_date.substring(0, 4)}) . IMDB ⭐{" "}
-                    {item.vote_average?.toFixed(1)}
+                    (
+                    {(item.first_air_date || item.release_date).substring(0, 4)}
+                    ) . IMDB ⭐ {item.vote_average?.toFixed(1)}
                   </Text>
-                </Text>
+                </View>
               </View>
             </Pressable>
           ))}
@@ -199,6 +216,47 @@ export default function HomeScreen() {
                       marqueeDelay={1000}
                     >
                       {item.name}
+                    </TextTicker>
+                    <Text style={styles.rating}>
+                      ⭐ {item.vote_average?.toFixed(1)}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+
+              <View style={styles.sectionTitleHeader}>
+                <Text style={styles.sectionTitle}>Trending Movies</Text>
+                <View style={styles.sectionLine} />
+              </View>
+              <FlatList
+                data={trendingMovies}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={{ paddingHorizontal: 4, gap: 12 }}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() =>
+                      navigation.navigate("Title", {
+                        id: item.id,
+                        type: "movie",
+                      })
+                    }
+                    style={styles.card}
+                  >
+                    <Image
+                      source={{ uri: getImageUrl(item.poster_path) }}
+                      style={styles.poster}
+                    />
+                    <TextTicker
+                      style={styles.cardTitle}
+                      duration={8000}
+                      loop
+                      bounce
+                      repeatSpacer={50}
+                      marqueeDelay={1000}
+                    >
+                      {item.title}
                     </TextTicker>
                     <Text style={styles.rating}>
                       ⭐ {item.vote_average?.toFixed(1)}
@@ -281,6 +339,21 @@ const styles = StyleSheet.create({
     height: 66,
     borderRadius: 6,
     backgroundColor: "#1a1a1a",
+  },
+  typeBadge: {
+    fontSize: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  movieBadge: {
+    backgroundColor: "rgba(229,9,20,0.2)",
+    color: "#e50914",
+  },
+  tvBadge: {
+    backgroundColor: "rgba(59,130,246,0.2)",
+    color: "#3b82f6",
   },
   itemTitle: {
     color: "#fff",

@@ -18,6 +18,7 @@ import { FavoriteStar } from "../components/FavoriteStar";
 
 import {
   getImageUrl,
+  getMovieDetails,
   getTVDetails,
   getTVSeasonsDetails,
 } from "../services/api/tmdb";
@@ -45,26 +46,30 @@ export default function TitleScreen() {
   const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
-    getTVDetails(id, type)
+    const fetchDetails = type === "movie" ? getMovieDetails : getTVDetails;
+    fetchDetails(id)
       .then((data) => {
         setDetails(data);
 
-        const firstSeason = data.seasons?.find((s) => s.season_number > 0);
-        if (firstSeason) {
-          setSeason(firstSeason.season_number);
-          setSeasonName(firstSeason.name);
+        // just for tv series
+        if (type === "tv") {
+          const firstSeason = data.seasons?.find((s) => s.season_number > 0);
+          if (firstSeason) {
+            setSeason(firstSeason.season_number);
+            setSeasonName(firstSeason.name);
+          }
         }
       })
       .finally(() => setLoading(false));
   }, [id, type]);
 
   useEffect(() => {
-    if (!id || !season) return;
+    if (!id || !season || type !== "tv") return;
     setEpisodeLoading(true);
     getTVSeasonsDetails(id, season)
       .then(setSeasonData)
       .finally(() => setEpisodeLoading(false));
-  }, [id, season]);
+  }, [id, season, type]);
 
   const handleSeasonChange = (name) => {
     if (!details?.seasons) return;
@@ -161,9 +166,10 @@ export default function TitleScreen() {
               onPress={() =>
                 toggleFavorite({
                   id: details?.id,
-                  title: details?.name,
-                  year: details?.first_air_date,
+                  title: details?.name || details?.title,
+                  year: details?.first_air_date || details?.release_date,
                   poster_path: details?.poster_path,
+                  type,
                 })
               }
             />
@@ -177,9 +183,11 @@ export default function TitleScreen() {
                 </View>
               ))}
             </View>
-            <Text style={styles.title}>{details?.name}</Text>
+            <Text style={styles.title}>{details?.name || details?.title}</Text>
             <View style={styles.metaRow}>
-              <Text style={styles.year}>{details?.first_air_date}</Text>
+              <Text style={styles.year}>
+                {details?.first_air_date || details?.release_date}
+              </Text>
               <Text style={styles.detailsRating}>
                 <FontAwesome name="star" size={15} color="yellow" />
                 {details?.vote_average?.toFixed(1)}
@@ -190,9 +198,13 @@ export default function TitleScreen() {
                   {details?.number_of_seasons !== 1 ? "s" : ""}
                 </Text>
               )}
-              <Text style={{ color: "#c0c0c0" }}>
-                {details?.number_of_episodes} Episodes
-              </Text>
+
+              {type === "tv" && (
+                <Text style={{ color: "#c0c0c0" }}>
+                  {details?.number_of_episodes} Episodes
+                </Text>
+              )}
+
               <Text
                 style={{
                   color: "#fff",
@@ -211,97 +223,108 @@ export default function TitleScreen() {
           <Text style={styles.plot}>{details?.overview}</Text>
         )}
 
-        <View style={{ zIndex: 100, paddingHorizontal: 16, marginBottom: 8 }}>
-          <DropdownSelect
-            label="انتخاب فصل"
-            value={seasonName}
-            options={seasonOptions}
-            onChange={handleSeasonChange}
-          />
-        </View>
+        {type === "movie" && (
+          <Pressable
+            style={styles.movieWatchBtn}
+            onPress={() => navigation.navigate("Player", { id, type: "movie" })}
+          >
+            <Text style={styles.watchText}>Watch Movie</Text>
+          </Pressable>
+        )}
 
-        {episodeLoading && <ActivityIndicator style={{ marginVertical: 10 }} />}
-
-        {seasonData?.episodes?.map((item) => {
-          const isUnreleased = item.air_date
-            ? new Date(item.air_date) > TODAY
-            : false;
-          return (
-            <View
-              key={`${id}-${season}-${item.episode_number}`}
-              style={[
-                styles.episodeCard,
-                { marginHorizontal: 16 },
-                isUnreleased && styles.episodeCardUnreleased,
-              ]}
-            >
-              <View>
-                {item.still_path ? (
-                  <Image
-                    style={styles.episodeImage}
-                    source={{ uri: getImageUrl(item.still_path, "w500") }}
-                  />
-                ) : (
-                  <View style={styles.episodeImagePlaceholder} />
-                )}
-                {isUnreleased && (
-                  <View style={styles.lockOverlay}>
-                    <FontAwesome name="lock" size={28} color="#fff" />
-                    <Text style={styles.lockDate}>{item.air_date}</Text>
+        {type === "tv" && (
+          <View style={{ zIndex: 100, paddingHorizontal: 16, marginBottom: 8 }}>
+            <DropdownSelect
+              label="انتخاب فصل"
+              value={seasonName}
+              options={seasonOptions}
+              onChange={handleSeasonChange}
+            />
+            {episodeLoading && (
+              <ActivityIndicator style={{ marginVertical: 10 }} />
+            )}
+            {seasonData?.episodes?.map((item) => {
+              const isUnreleased = item.air_date
+                ? new Date(item.air_date) > TODAY
+                : false;
+              return (
+                <View
+                  key={`${id}-${season}-${item.episode_number}`}
+                  style={[
+                    styles.episodeCard,
+                    { marginHorizontal: 16 },
+                    isUnreleased && styles.episodeCardUnreleased,
+                  ]}
+                >
+                  <View>
+                    {item.still_path ? (
+                      <Image
+                        style={styles.episodeImage}
+                        source={{ uri: getImageUrl(item.still_path, "w500") }}
+                      />
+                    ) : (
+                      <View style={styles.episodeImagePlaceholder} />
+                    )}
+                    {isUnreleased && (
+                      <View style={styles.lockOverlay}>
+                        <FontAwesome name="lock" size={28} color="#fff" />
+                        <Text style={styles.lockDate}>{item.air_date}</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
 
-              <View style={styles.episodeInfo}>
-                <Text style={styles.episdoeNumber}>
-                  قسمت {item.episode_number}
-                </Text>
-                <Text style={styles.episodeTitle} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                {!!item.overview && (
-                  <Text
-                    style={styles.episodeOverview}
-                    numberOfLines={
-                      expandedOverview[item.episode_number] ? undefined : 2
-                    }
-                    onPress={() =>
-                      setExpandedOverview((prev) => ({
-                        ...prev,
-                        [item.episode_number]: !prev[item.episode_number],
-                      }))
-                    }
+                  <View style={styles.episodeInfo}>
+                    <Text style={styles.episdoeNumber}>
+                      قسمت {item.episode_number}
+                    </Text>
+                    <Text style={styles.episodeTitle} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    {!!item.overview && (
+                      <Text
+                        style={styles.episodeOverview}
+                        numberOfLines={
+                          expandedOverview[item.episode_number] ? undefined : 2
+                        }
+                        onPress={() =>
+                          setExpandedOverview((prev) => ({
+                            ...prev,
+                            [item.episode_number]: !prev[item.episode_number],
+                          }))
+                        }
+                      >
+                        {item.overview}
+                      </Text>
+                    )}
+                  </View>
+
+                  <Pressable
+                    style={[
+                      styles.watchBtn,
+                      isUnreleased && styles.watchBtnDisabled,
+                    ]}
+                    onPress={() => {
+                      if (isUnreleased) return;
+                      navigation.navigate("Player", {
+                        id,
+                        type: "tv",
+                        season,
+                        ep: item.episode_number,
+                        episodes: seasonData?.episodes ?? [],
+                      });
+                    }}
+                    disabled={isUnreleased}
                   >
-                    {item.overview}
-                  </Text>
-                )}
-              </View>
-
-              <Pressable
-                style={[
-                  styles.watchBtn,
-                  isUnreleased && styles.watchBtnDisabled,
-                ]}
-                onPress={() => {
-                  if (isUnreleased) return;
-                  navigation.navigate("Player", {
-                    id,
-                    type: "tv",
-                    season,
-                    ep: item.episode_number,
-                    episodes: seasonData?.episodes ?? [],
-                  });
-                }}
-                disabled={isUnreleased}
-              >
-                <Text style={styles.watchText}>
-                  {" "}
-                  {isUnreleased ? " منتشر نشده 🔒" : "پخش ▶"}
-                </Text>
-              </Pressable>
-            </View>
-          );
-        })}
+                    <Text style={styles.watchText}>
+                      {" "}
+                      {isUnreleased ? " منتشر نشده 🔒" : "پخش ▶"}
+                    </Text>
+                  </Pressable>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -573,5 +596,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#222",
     borderRadius: 12,
     marginBottom: 20,
+  },
+  movieWatchBtn: {
+    backgroundColor: "#e50914",
+    paddingVertical: 14,
+    marginHorizontal: 16,
+    marginVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
   },
 });

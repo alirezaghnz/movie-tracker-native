@@ -17,6 +17,7 @@ export const PLAYER_SOURCES = [
     },
     seriesUrl: (id, season, ep) =>
       `https://player.videasy.net/tv/${id}/${season}/${ep}`,
+    movieUrl: (id) => `https://player.videasy.net/movie/${id}`,
   },
   {
     id: "vidsrc",
@@ -29,6 +30,7 @@ export const PLAYER_SOURCES = [
     params: {},
     seriesUrl: (id, season, ep) =>
       `https://vsembed.su/embed/tv/${id}/${season}/${ep}`,
+    movieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
   },
 ];
 
@@ -44,7 +46,8 @@ export const getSourceUrl = (
 ) => {
   const src =
     PLAYER_SOURCES.find((s) => s.id === sourceId) ?? PLAYER_SOURCES[0];
-  const baseUrl = src.seriesUrl(tmdbId, season, ep);
+  const baseUrl =
+    type === "tv" ? src.seriesUrl(tmdbId, season, ep) : src.movieUrl(tmdbId);
   const url = new URL(baseUrl);
 
   Object.entries(src.params).forEach(([key, value]) => {
