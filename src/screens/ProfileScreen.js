@@ -38,14 +38,14 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={{ top: 40, left: 10 }}>
+      {/**    <View style={{ top: 40, left: 10 }}>
         <BackButton />
-      </View>
+      </View> **/}
 
-      <Text style={styles.title}>پروفایل</Text>
+      <Text style={styles.title}>Profile</Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>توکن TMDB </Text>
+        <Text style={styles.label}> TMDB Token</Text>
 
         {loading ? (
           <ActivityIndicator color="#fff" />
@@ -59,18 +59,17 @@ export default function ProfileScreen() {
         )}
 
         <Text style={styles.helper}>
-          این توکن به صورت امن روی دستگاه شما ذخیره شده است.
+          This token is securely stored on your device.
         </Text>
       </View>
 
       <View style={styles.updateContainer}>
         <View style={styles.updateHeader}>
-          <Text style={styles.updateLabel}>آپدیت برنامه</Text>
-
           <MaterialIcons name="update" size={22} color="white" />
+          <Text style={styles.updateLabel}>App Updates</Text>
         </View>
         <Text style={styles.updateSubLabel}>
-          برای بررسی وجود نسخه جدید دکمه زیر را بزنید
+          Stay up to date with the latest release.
         </Text>
         <UpdateChecker />
       </View>
@@ -86,11 +85,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFF",
-    fontSize: 28,
-    fontWeight: "700",
+    fontSize: 40,
     marginTop: 50,
     marginBottom: 24,
-    textAlign: "right",
+    fontFamily: "Bebas",
   },
   card: {
     backgroundColor: "#161616",
@@ -101,10 +99,9 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "#AAA",
-    fontSize: 13,
+    fontSize: 15,
     fontFamily: "IRANSans",
     marginBottom: 10,
-    textAlign: "right",
   },
   input: {
     backgroundColor: "#1F1F1F",
@@ -117,10 +114,8 @@ const styles = StyleSheet.create({
   },
   helper: {
     color: "#777",
-    fontSize: 9,
-    fontFamily: "IRANSans",
+    fontSize: 12,
     marginTop: 10,
-    textAlign: "right",
     lineHeight: 20,
   },
   updateContainer: {
@@ -138,10 +133,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   updateLabel: {
-    textAlign: "right",
     color: "#fff",
-    fontFamily: "IRANSans",
-    fontSize: 14,
+    fontSize: 17,
     fontWeight: "600",
   },
 
@@ -149,7 +142,6 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 11,
     fontFamily: "IRANSans",
-    textAlign: "right",
     marginBottom: 4,
   },
 });

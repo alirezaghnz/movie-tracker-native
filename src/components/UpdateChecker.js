@@ -1,7 +1,7 @@
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useAlert } from "../components/Customalert";
 import { checkForUpdate, getCurrentVersion } from "../utils/updateChecker";
-import { useState, version } from "react";
+import { useState } from "react";
 
 export function UpdateChecker() {
   const { showAlert } = useAlert();
@@ -15,22 +15,26 @@ export function UpdateChecker() {
     setLastResult(result);
 
     if (result.error) {
-      showAlert({ title: "خطا", body: "بررسی آپدیت ممکن نشد", type: "error" });
+      showAlert({
+        title: "Error",
+        body: "Unable to check for updates",
+        type: "error",
+      });
       return;
     }
 
     if (!result.hasUpdate) {
       showAlert({
-        title: "اپ به‌روزه ✓",
-        body: `نسخه فعلی: ${result.currentVersion}`,
+        title: "You're Up to Date ✓",
+        body: `Current Version: ${result.currentVersion}`,
         type: "success",
       });
       return;
     }
 
     showAlert({
-      title: `نسخه ${result.latestVersion} موجوده!`,
-      body: "در حال باز کردن صفحه دانلود...",
+      title: `Version ${result.latestVersion} Available!`,
+      body: "Opening download page...",
       type: "info",
     });
 
@@ -42,7 +46,7 @@ export function UpdateChecker() {
   return (
     <View style={styles.wrapper}>
       <View style={styles.versionRow}>
-        <Text style={styles.versionLabel}>نسخه فعلی</Text>
+        <Text style={styles.versionLabel}>Current Version</Text>
         <View style={styles.versionBadge}>
           <Text style={styles.versionText}>v{currentVersion}</Text>
         </View>
@@ -51,8 +55,8 @@ export function UpdateChecker() {
         <View style={styles.resultRow}>
           <Text style={styles.resultText}>
             {lastResult.hasUpdate
-              ? `نسخه ${lastResult.latestVersion} موجود است`
-              : "آخرین نسخه نصب شده است ✓"}
+              ? `Version (v${lastResult.latestVersion}) is available`
+              : "Latest version installed ✓"}
           </Text>
         </View>
       )}
@@ -66,7 +70,7 @@ export function UpdateChecker() {
         ]}
       >
         <Text style={styles.buttonText}>
-          {checking ? "در حال بررسی..." : "بررسی آپدیت"}
+          {checking ? "Checking..." : "Check for Updates"}
         </Text>
       </Pressable>
     </View>
@@ -79,14 +83,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   versionRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   versionLabel: {
     color: "#888",
     fontSize: 12,
-    fontFamily: "IRANSans",
   },
   versionBadge: {
     backgroundColor: "#244224",
@@ -107,7 +110,6 @@ const styles = StyleSheet.create({
   resultText: {
     color: "#666",
     fontSize: 11,
-    fontFamily: "IRANSans",
   },
   button: {
     backgroundColor: "#d42929",
@@ -126,7 +128,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 14,
-    fontFamily: "IRANSans",
     fontWeight: 600,
   },
 });

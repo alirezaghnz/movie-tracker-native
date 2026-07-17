@@ -235,7 +235,7 @@ export default function TitleScreen() {
         {type === "tv" && (
           <View style={{ zIndex: 100, paddingHorizontal: 16, marginBottom: 8 }}>
             <DropdownSelect
-              label="انتخاب فصل"
+              label="Select Season"
               value={seasonName}
               options={seasonOptions}
               onChange={handleSeasonChange}
@@ -275,7 +275,7 @@ export default function TitleScreen() {
 
                   <View style={styles.episodeInfo}>
                     <Text style={styles.episdoeNumber}>
-                      قسمت {item.episode_number}
+                      Episode {item.episode_number}
                     </Text>
                     <Text style={styles.episodeTitle} numberOfLines={1}>
                       {item.name}
@@ -317,7 +317,7 @@ export default function TitleScreen() {
                   >
                     <Text style={styles.watchText}>
                       {" "}
-                      {isUnreleased ? " منتشر نشده 🔒" : "پخش ▶"}
+                      {isUnreleased ? " Not Released 🔒" : "Watch ▶"}
                     </Text>
                   </Pressable>
                 </View>
@@ -468,9 +468,8 @@ const styles = StyleSheet.create({
   episdoeNumber: {
     color: "#e50914",
     fontSize: 12,
-    fontFamily: "IRANSans",
+    fontFamily: "Bebas",
     marginBottom: 4,
-    textAlign: "right",
   },
   episodeTitle: {
     color: "#fff",
@@ -500,9 +499,8 @@ const styles = StyleSheet.create({
   },
   watchText: {
     color: "#fff",
-    fontSize: 14,
-    fontFamily: "IRANSans",
-    fontWeight: "600",
+    fontSize: 20,
+    fontFamily: "Bebas",
   },
 
   downloadBtn: {

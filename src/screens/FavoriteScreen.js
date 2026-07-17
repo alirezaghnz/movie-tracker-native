@@ -18,7 +18,6 @@ import { Swipeable } from "react-native-gesture-handler";
 import SwipeDeleteAction from "../components/SwipeDeleteAction";
 import ErrorModal from "../components/ErrorModal";
 import { getImageUrl } from "../services/api/tmdb";
-import { BackButton } from "../components/BackButton";
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 export function FavoriteScreen() {
@@ -59,12 +58,12 @@ export function FavoriteScreen() {
 
   const handleDeleteSelected = useCallback(async () => {
     Alert.alert(
-      "حذف موارد انتخاب شده",
-      `${selectedItems.length} مورد از علاقه‌مندی‌ها حذف شود؟`,
+      "Delete Selected Movies/Series",
+      `Remove ${selectedItems.length} from favorites? `,
       [
-        { text: "لغو", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "حذف",
+          text: "Delete",
           style: "destructive",
           onPress: async () => {
             setIsLoading(true);
@@ -90,7 +89,7 @@ export function FavoriteScreen() {
           dragX={dragX}
           onDelete={() => handleRemoveItem(imdbID)}
         >
-          حذف
+          Delete
         </SwipeDeleteAction>
       );
     },
@@ -121,8 +120,7 @@ export function FavoriteScreen() {
         ]}
       >
         <View style={styles.headerContent}>
-          <BackButton />
-          <Text style={styles.headerTitle}>علاقه‌مندی‌ها</Text>
+          <Text style={styles.headerTitle}>Favorites</Text>
         </View>
 
         {favorites.length > 0 && (
@@ -137,7 +135,7 @@ export function FavoriteScreen() {
                   }}
                 >
                   <MaterialIcons name="close" size={22} color="#666" />
-                  <Text style={styles.headerButtonText}>لغو</Text>
+                  <Text style={styles.headerButtonText}>Cancel</Text>
                 </Pressable>
                 {selectedItems.length > 0 && (
                   <Pressable
@@ -152,7 +150,7 @@ export function FavoriteScreen() {
                     <Text
                       style={[styles.headerButtonText, styles.deleteButtonText]}
                     >
-                      حذف ({selectedItems.length})
+                      Delete ({selectedItems.length})
                     </Text>
                   </Pressable>
                 )}
@@ -164,11 +162,11 @@ export function FavoriteScreen() {
                   onPress={() => setIsSelectionMode(true)}
                 >
                   <MaterialIcons name="check-box" size={22} color="#666" />
-                  <Text style={styles.headerButtonText}>انتخاب</Text>
+                  <Text style={styles.headerButtonText}>Select</Text>
                 </Pressable>
                 <Pressable style={styles.headerButton} onPress={handleClearAll}>
                   <MaterialIcons name="delete-sweep" size={22} color="#666" />
-                  <Text style={styles.headerButtonText}>حذف همه</Text>
+                  <Text style={styles.headerButtonText}>Clear All</Text>
                 </Pressable>
               </>
             )}
@@ -209,7 +207,13 @@ export function FavoriteScreen() {
                 if (isSelectionMode) {
                   toggleSelectItem(item.id);
                 } else {
-                  navigation.navigate("Title", { id: item.id, type: "tv" });
+                  navigation.navigate("HomeStack", {
+                    screen: "Title",
+                    params: {
+                      id: item.id,
+                      type: item.type,
+                    },
+                  });
                 }
               }}
               onLongPress={() => {
@@ -276,18 +280,18 @@ export function FavoriteScreen() {
       <View style={styles.emptyContainer}>
         <Animated.View style={styles.emptyContent}>
           <MaterialIcons name="favorite-border" size={80} color="#333" />
-          <Text style={styles.emptyTitle}>لیست علاقه‌مندی‌ها خالی است</Text>
+          <Text style={styles.emptyTitle}>No Favorites Yet</Text>
           <Text style={styles.emptySubtitle}>
-            فیلم‌ها و سریال‌های مورد علاقه خود را اینجا ذخیره کنید
+            Save your favorite movies and TV shows here.
           </Text>
           <Pressable
             style={styles.exploreButton}
             onPress={() => navigation.navigate("Home")}
           >
-            <MaterialIcons name="arrow-left" size={30} color="#fff" />
             <Text style={styles.exploreButtonText}>
-              بریم برای کشف سریال مورد علاقه‌ات
+              Discover Something to Watch
             </Text>
+            <MaterialIcons name="arrow-right" size={30} color="#fff" />
           </Pressable>
         </Animated.View>
       </View>
@@ -329,7 +333,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    padding: 30,
+    padding: 40,
   },
   header: {
     backgroundColor: "#0a0a0a",
@@ -347,9 +351,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: "#ffee00",
-    fontSize: 20,
-    fontFamily: "IRANSans",
-    writingDirection: "rtl",
+    fontSize: 38,
+    fontFamily: "Bebas",
   },
   headerCount: {
     color: "#999",
@@ -379,7 +382,6 @@ const styles = StyleSheet.create({
     color: "#666",
     marginLeft: 6,
     fontSize: 14,
-    writingDirection: "rtl",
   },
   deleteButton: {
     backgroundColor: "#2a1a1a",
@@ -455,11 +457,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     color: "#fff",
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 38,
+    fontFamily: "Bebas",
     marginTop: 20,
     marginBottom: 10,
-    writingDirection: "rtl",
   },
   emptySubtitle: {
     color: "#666",

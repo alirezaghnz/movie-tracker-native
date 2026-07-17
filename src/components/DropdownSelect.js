@@ -71,12 +71,11 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "#aaa",
-    fontSize: 12,
-    marginBottom: 0,
-    textAlign: "right",
+    fontSize: 16,
+    marginBottom: 4,
   },
   selectBtn: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#111",
@@ -96,7 +95,7 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     position: "absolute",
-    top: 48,
+    top: 63,
     left: 0,
     right: 0,
     zIndex: 9999,
