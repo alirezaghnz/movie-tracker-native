@@ -59,8 +59,8 @@ export default function AppContent() {
   const handleSave = async () => {
     if (!apiKey.trim()) {
       showAlert({
-        title: "توکن خالی است",
-        body: "لطفاً توکن را وارد کنید",
+        title: "Token Required",
+        body: "Please enter your TMDB token.",
         type: "error",
       });
       return;
@@ -79,8 +79,8 @@ export default function AppContent() {
     setApiKey("");
     setShowApiModal(false);
     showAlert({
-      title: "توکن ذخیره شد",
-      body: "اتصال با موفقیت برقرار شد",
+      title: "Token Saved",
+      body: "Connection established successfully.",
       type: "success",
     });
     setNavKey((k) => k + 1);
@@ -137,61 +137,59 @@ export default function AppContent() {
                 alignItems: "center",
               }}
             >
-              <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
-                🎬 اتصال به TMDB
+              <Text
+                style={{ color: "#fff", fontSize: 18, fontFamily: "Bebas" }}
+              >
+                {" "}
+                🎬 Connect to TMDB{" "}
               </Text>
             </View>
 
             <View style={{ padding: 20 }}>
+              Guide:
               <Text
                 style={{
-                  textAlign: "right",
-                  writingDirection: "rtl",
-                  fontSize: 13.5,
-                  lineHeight: 26,
+                  fontSize: 14,
+                  lineHeight: 24,
                   color: "#444",
                   marginBottom: 6,
-                  fontFamily: "IRANSans",
                 }}
               >
-                برای شروع، توکن{" "}
-                <Text style={{ fontWeight: "bold", color: "#01b4e4" }}>
-                  رایگان TMDB
-                </Text>{" "}
-                خود را وارد کنید.
-                {"\n"}به{" "}
+                To get started, enter your free{" "}
+                <Text style={{ color: "#01b4e4", fontFamily: "Bebas" }}>
+                  TMDB Read Access Token
+                </Text>
+                .{"\n"}
+                Visit{" "}
                 <Text
                   style={{
                     color: "#1a73e8",
                     textDecorationLine: "underline",
-                    fontWeight: "500",
+                    fontFamily: "Bebas",
                   }}
                   onPress={() =>
                     Linking.openURL("https://www.themoviedb.org/settings/api")
                   }
                 >
-                  themoviedb.org ← تنظیمات ← API
-                </Text>{" "}
-                بروید و توکن دسترسی خواندن را کپی کنید.
+                  themoviedb.org → Settings → API
+                </Text>
+                {"\n"}
+                and copy your Read Access Token.
               </Text>
-
               <Text
                 style={{
-                  textAlign: "right",
-                  writingDirection: "rtl",
-                  fontSize: 11.5,
-                  fontFamily: "IRANSans",
+                  fontSize: 11,
                   color: "#999",
                   marginBottom: 16,
                 }}
               >
-                ⚠️ توکن JWT بلند را کپی کنید، نه کلید کوتاه‌تر API
+                {" "}
+                ⚠️ Copy the long JWT token, not the shorter API Key.{" "}
               </Text>
-
               <TextInput
                 value={apiKey}
                 onChangeText={setApiKey}
-                placeholder="توکن را اینجا paste کنید..."
+                placeholder="Paste your TMDB token here..."
                 placeholderTextColor="#bbb"
                 multiline
                 numberOfLines={3}
@@ -210,14 +208,12 @@ export default function AppContent() {
                   minHeight: 70,
                 }}
               />
-
               {checking && (
                 <ActivityIndicator
                   style={{ marginBottom: 12 }}
                   color="#01b4e4"
                 />
               )}
-
               <View style={{ flexDirection: "row" }}>
                 <Pressable
                   onPress={handleSave}
@@ -234,10 +230,10 @@ export default function AppContent() {
                   <Text
                     style={{
                       color: "#fff",
-                      fontFamily: "IRANSans",
+                      fontFamily: "Bebas",
                     }}
                   >
-                    {checking ? "در حال بررسی..." : "ذخیره"}
+                    {checking ? "Checking..." : "Save"}
                   </Text>
                 </Pressable>
               </View>

@@ -18,7 +18,6 @@ import {
   getTopRatedTV,
   getTrending,
   searchAll,
-  searchTV,
 } from "../services/api/tmdb";
 import TextTicker from "react-native-text-ticker";
 import TopRatedSlider from "../components/TopRatedSlider";
@@ -159,9 +158,9 @@ export default function HomeScreen() {
           (error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorIcon}>📡</Text>
-              <Text style={styles.errorTitle}>اتصال برقرار نشد. </Text>
+              <Text style={styles.errorTitle}>Unable to Connect</Text>
               <Text style={styles.errorSubtitle}>
-                اینترنت یا فیلترشکن خود را بررسی کنید.
+                Check your internet connection and try again.
               </Text>
               <Pressable
                 style={styles.retryBtn}
@@ -177,7 +176,7 @@ export default function HomeScreen() {
                     .finally(() => setLoading(false));
                 }}
               >
-                <Text style={styles.retryText}>تلاش مجدد</Text>
+                <Text style={styles.retryText}>Try Again</Text>
               </Pressable>
             </View>
           ) : loading ? (
@@ -234,35 +233,52 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={{ paddingHorizontal: 4, gap: 12 }}
-                renderItem={({ item }) => (
-                  <Pressable
-                    onPress={() =>
-                      navigation.navigate("Title", {
-                        id: item.id,
-                        type: "movie",
-                      })
-                    }
-                    style={styles.card}
-                  >
-                    <Image
-                      source={{ uri: getImageUrl(item.poster_path) }}
-                      style={styles.poster}
-                    />
-                    <TextTicker
-                      style={styles.cardTitle}
-                      duration={8000}
-                      loop
-                      bounce
-                      repeatSpacer={50}
-                      marqueeDelay={1000}
+                renderItem={({ item }) => {
+                  const rawDate = item.release_date || item.first_air_date;
+                  const isUnreleased = rawDate
+                    ? new Date(rawDate) > new Date()
+                    : false;
+
+                  return (
+                    <Pressable
+                      onPress={() =>
+                        navigation.navigate("Title", {
+                          id: item.id,
+                          type: "movie",
+                        })
+                      }
+                      style={styles.card}
                     >
-                      {item.title}
-                    </TextTicker>
-                    <Text style={styles.rating}>
-                      ⭐ {item.vote_average?.toFixed(1)}
-                    </Text>
-                  </Pressable>
-                )}
+                      <View>
+                        <Image
+                          source={{ uri: getImageUrl(item.poster_path) }}
+                          style={styles.poster}
+                        />
+                        {isUnreleased && (
+                          <View style={styles.comingSoonOverlay}>
+                            <Text style={styles.comingSoonText}>
+                              Coming Soon 🔒
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <TextTicker
+                        style={styles.cardTitle}
+                        duration={8000}
+                        loop
+                        bounce
+                        repeatSpacer={50}
+                        marqueeDelay={1000}
+                      >
+                        {item.title}
+                      </TextTicker>
+                      <Text style={styles.rating}>
+                        ⭐ {item.vote_average?.toFixed(1)}
+                      </Text>
+                    </Pressable>
+                  );
+                }}
               />
             </>
           ))}
@@ -449,7 +465,6 @@ const styles = StyleSheet.create({
   errorTitle: {
     color: "#fff",
     fontSize: 18,
-    fontFamily: "IRANSans",
   },
   errorSubtitle: {
     color: "#666",
@@ -471,5 +486,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontFamily: "IRANSans",
+  },
+  comingSoonOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  comingSoonText: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: "Bebas",
+    textAlign: "center",
   },
 });
