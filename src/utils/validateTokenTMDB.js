@@ -40,9 +40,9 @@ export async function validateToken(tokenTmdb) {
     return { ok: true };
   } catch (err) {
     ping.cancel();
-    console.log("=== VALIDATE TOKEN CATCH ===");
-    console.log("name:", err.name);
-    console.log("message:", err.message);
+    //console.log("VALIDATE TOKEN CATCH");
+    //console.log("name:", err.name);
+    //console.log("message:", err.message);
 
     if (err.name === "AbortError") {
       return { ok: false, reason: "timeout" };
@@ -51,38 +51,48 @@ export async function validateToken(tokenTmdb) {
   }
 }
 
+// error Handeling
 export function errorMessage(reason, status) {
   switch (reason) {
     case "invalid_token":
       return {
-        title: "توکن نامعتبر",
-        body: " توکن TMDB نامعتبر است. Read Access Token را وارد کنید.",
+        title: "Invalid Token",
+        body: "The TMDB token is invalid. Please enter a valid Read Access Token.",
       };
+
     case "forbidden":
       return {
-        title: "دسترسی غیرمجاز",
-        body: "TMDB خطای 403 برگرداند. ممکن است حساب شما مسدود شده یا توکن لغو شده باشد.",
+        title: "Access Denied",
+        body: "TMDB returned a 403 error. Your token may have been revoked or your account may be restricted.",
       };
+
     case "timeout":
       return {
-        title: "اتمام زمان درخواست",
-        body: "TMDB پاسخ نداد. اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.",
+        title: "Request Timed Out",
+        body: "TMDB did not respond in time. Please check your internet connection and try again.",
       };
+
     case "unreachable":
       return {
-        title: "عدم دسترسی به TMDB",
-        body: "اتصال به api.themoviedb.org برقرار نشد. اینترنت خود را بررسی کنید.",
+        title: "TMDB Unreachable",
+        body: "Unable to connect to api.themoviedb.org. Please check your internet connection.",
       };
+
     case "tmdb_error":
     case "api_error":
       return {
-        title: "خطای سرور TMDB",
-        body: `سرور TMDB پاسخ غیرمنتظره‌ای داد${status ? ` (HTTP ${status})` : ""}. لطفاً دوباره تلاش کنید.`,
+        title: "TMDB Server Error",
+        body: `TMDB returned an unexpected response${
+          status ? ` (HTTP ${status})` : ""
+        }. Please try again later.`,
       };
+
     default:
       return {
-        title: "خطای غیرمنتظره",
-        body: `TMDB یک خطای غیرمنتظره برگرداند${status ? ` (HTTP ${status})` : ""}. لطفاً دوباره تلاش کنید.`,
+        title: "Unexpected Error",
+        body: `TMDB returned an unexpected error${
+          status ? ` (HTTP ${status})` : ""
+        }. Please try again later.`,
       };
   }
 }
