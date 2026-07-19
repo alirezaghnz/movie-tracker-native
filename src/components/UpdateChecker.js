@@ -90,6 +90,7 @@ const styles = StyleSheet.create({
   versionLabel: {
     color: "#888",
     fontSize: 12,
+    fontWeight: "600",
   },
   versionBadge: {
     backgroundColor: "#244224",
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
   versionText: {
     color: "#aaa",
     fontSize: 12,
-    fontFamily: "IRANSans",
+    fontWeight: "600",
   },
   resultRow: {
     alignItems: "flex-end",

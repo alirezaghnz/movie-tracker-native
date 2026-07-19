@@ -366,9 +366,8 @@ const styles = StyleSheet.create({
   },
   posterContainer: {
     width: "100%",
-    height: 350,
-    borderRadius: 20,
-    opverflow: "hidden",
+    height: 260,
+    overflow: "hidden",
   },
   posterOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -398,11 +397,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   year: {
-    backgroundColor: "#e50914",
+    backgroundColor: "#666",
     color: "#fff",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 2,
     overflow: "hidden",
   },
   detailsRating: {

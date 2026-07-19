@@ -7,9 +7,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import { BackButton } from "../components/BackButton";
 import { UpdateChecker } from "../components/UpdateChecker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import AntDesign from "@expo/vector-icons/AntDesign";
 
 export default function ProfileScreen() {
   const [token, setToken] = useState("");
@@ -43,35 +43,72 @@ export default function ProfileScreen() {
       </View> **/}
 
       <Text style={styles.title}>Profile</Text>
+      <View
+        style={{
+          borderWidth: 1,
+          borderRadius: 20,
+          padding: 10,
+          backgroundColor: "#2e2525",
+          gap: 9,
+        }}
+      >
+        <View style={styles.card}>
+          <Text style={styles.label}> TMDB Token</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.label}> TMDB Token</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <TextInput
+              value={maskToken(token)}
+              editable={false}
+              selectTextOnFocus={false}
+              style={styles.input}
+            />
+          )}
 
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <TextInput
-            value={maskToken(token)}
-            editable={false}
-            selectTextOnFocus={false}
-            style={styles.input}
-          />
-        )}
-
-        <Text style={styles.helper}>
-          This token is securely stored on your device.
-        </Text>
-      </View>
-
-      <View style={styles.updateContainer}>
-        <View style={styles.updateHeader}>
-          <MaterialIcons name="update" size={22} color="white" />
-          <Text style={styles.updateLabel}>App Updates</Text>
+          <Text style={styles.helper}>
+            This token is securely stored on your device.
+          </Text>
         </View>
-        <Text style={styles.updateSubLabel}>
-          Stay up to date with the latest release.
-        </Text>
-        <UpdateChecker />
+
+        <View style={styles.card}>
+          <View style={styles.HeaderCard}>
+            <Text style={styles.updateLabel}>App Updates</Text>
+            <MaterialIcons name="update" size={22} color="white" />
+          </View>
+          <Text style={styles.updateSubLabel}>
+            Stay up to date with the latest release.
+          </Text>
+          <UpdateChecker />
+        </View>
+        <View style={styles.card}>
+          <View style={styles.HeaderCard}>
+            <View style={{ gap: 2 }}>
+              <Text style={{ color: "#fff", fontWeight: "600" }}>
+                Need help or found a bug?
+              </Text>
+              <Text style={{ color: "#666", fontSize: 10 }}>
+                Open an issue or browse the README on GitHub
+              </Text>
+            </View>
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: "#333",
+                borderRadius: 6,
+                paddingVertical: 4,
+                paddingHorizontal: 8,
+                justifyContent: "space-between",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 11 }}>Github</Text>
+              <AntDesign name="github" size={11} color="white" />
+            </View>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -109,8 +146,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     minHeight: 40,
-    textAlign: "right",
-    writingDirection: "rtl",
   },
   helper: {
     color: "#777",
@@ -118,16 +153,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     lineHeight: 20,
   },
-  updateContainer: {
-    padding: 18,
-    backgroundColor: "#161616",
-    marginTop: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#242424",
-  },
-  updateHeader: {
-    flexDirection: "row-reverse",
+
+  HeaderCard: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 4,
@@ -141,7 +169,6 @@ const styles = StyleSheet.create({
   updateSubLabel: {
     color: "#666",
     fontSize: 11,
-    fontFamily: "IRANSans",
     marginBottom: 4,
   },
 });

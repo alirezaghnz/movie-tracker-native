@@ -84,6 +84,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 10,
+    borderEndEndRadius: 0,
+    borderStartEndRadius: 0,
   },
   value: {
     color: "#fff",
@@ -101,8 +103,9 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     elevation: 9999,
     backgroundColor: "#111",
-    borderRadius: 10,
+    borderRadius: 0,
     borderWidth: 1,
+    borderTopWidth: 0,
     borderColor: "#222",
     overflow: "hidden",
   },
@@ -112,7 +115,6 @@ const styles = StyleSheet.create({
   },
   optionText: {
     color: "#ccc",
-    textAlign: "right",
     fontSize: 14,
   },
   active: {
