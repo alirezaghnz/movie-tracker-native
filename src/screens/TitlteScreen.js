@@ -24,6 +24,7 @@ import {
 } from "../services/api/tmdb";
 import ErrorContainer from "../components/ErrorContainer";
 import { BackButton } from "../components/BackButton";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TODAY = (() => {
   const d = new Date();
@@ -44,6 +45,8 @@ export default function TitleScreen() {
   const [episodeLoading, setEpisodeLoading] = useState(false);
   const [expandedOverview, setExpandedOverview] = useState({});
   const { isFavorite, toggleFavorite } = useFavorites();
+
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const fetchDetails = type === "movie" ? getMovieDetails : getTVDetails;
@@ -150,7 +153,10 @@ export default function TitleScreen() {
         </TouchableOpacity>
       </View>
       */}
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 55 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.posterContainer}>
           <Image
             source={{ uri: getImageUrl(details?.backdrop_path) }}
@@ -226,7 +232,15 @@ export default function TitleScreen() {
         {type === "movie" && (
           <Pressable
             style={styles.movieWatchBtn}
-            onPress={() => navigation.navigate("Player", { id, type: "movie" })}
+            onPress={() =>
+              navigation.navigate("Player", {
+                id,
+                type: "movie",
+                poster_path: details?.poster_path,
+                title: details?.title,
+                release_date: details?.release_date,
+              })
+            }
           >
             <Text style={styles.watchText}>Watch Movie</Text>
           </Pressable>
@@ -252,7 +266,7 @@ export default function TitleScreen() {
                   key={`${id}-${season}-${item.episode_number}`}
                   style={[
                     styles.episodeCard,
-                    { marginHorizontal: 16 },
+                    { marginHorizontal: 10 },
                     isUnreleased && styles.episodeCardUnreleased,
                   ]}
                 >
@@ -305,12 +319,16 @@ export default function TitleScreen() {
                     ]}
                     onPress={() => {
                       if (isUnreleased) return;
+
                       navigation.navigate("Player", {
                         id,
                         type: "tv",
                         season,
                         ep: item.episode_number,
                         episodes: seasonData?.episodes ?? [],
+                        title: details?.name,
+                        poster_path: details?.poster_path,
+                        first_air_date: details?.first_air_date,
                       });
                     }}
                     disabled={isUnreleased}

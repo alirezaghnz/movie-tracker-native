@@ -6,6 +6,7 @@ import { FavoriteScreen } from "../screens/FavoriteScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialIcons } from "@expo/vector-icons";
+import RecentlyScreen from "../screens/RecentlyScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -27,6 +28,7 @@ function HomeStack() {
 export default function MainNavigator() {
   return (
     <Tab.Navigator
+      initialRouteName="HomeStack"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -39,17 +41,14 @@ export default function MainNavigator() {
           borderColor: "rgba(255, 255, 255, 0.08)",
           height: 60,
           paddingBottom: 8,
-          paddingTop: 10,
+          paddingTop: 4,
           shadowColor: "#000",
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.3,
+          shadowOpacity: 0.1,
           shadowRadius: 12,
-          elevation: 12,
+          elevation: 30,
         },
         tabBarActiveTintColor: "#e50914",
-        tabBarInactiveTintColor: "#555",
-
-        tabBarShowLabel: false,
+        tabBarInactiveTintColor: "#555555",
       }}
     >
       <Tab.Screen
@@ -69,6 +68,16 @@ export default function MainNavigator() {
           tabBarLabel: "Fav",
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="favorite" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Recently"
+        component={RecentlyScreen}
+        options={{
+          tabBarLabel: "Recently",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="history" size={size} color={color} />
           ),
         }}
       />
