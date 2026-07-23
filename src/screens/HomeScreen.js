@@ -9,17 +9,15 @@ import {
   Image,
   SafeAreaView,
   TouchableOpacity,
-  Linking,
   FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
-import FavoriteFab from "../components/FavoriteFab";
 import {
   getImageUrl,
   getTopRatedTV,
   getTrending,
-  searchTV,
+  searchAll,
 } from "../services/api/tmdb";
 import TextTicker from "react-native-text-ticker";
 import TopRatedSlider from "../components/TopRatedSlider";
@@ -28,6 +26,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const [query, setQuery] = useState("");
   const [trendingSeries, setTrendingSeries] = useState([]);
+  const [trendingMovies, setTrendingMovies] = useState([]);
   const [topRated, setTopRated] = useState([]);
   const [results, setResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -36,8 +35,11 @@ export default function HomeScreen() {
   const inputRef = useRef(null); // for focus on input
 
   useEffect(() => {
-    getTrending("tv", "day")
-      .then((data) => setTrendingSeries(data.results))
+    Promise.all([getTrending("tv", "day"), getTrending("movie", "day")])
+      .then(([tvData, movieData]) => {
+        setTrendingSeries(tvData.results);
+        setTrendingMovies(movieData.results);
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
@@ -54,8 +56,13 @@ export default function HomeScreen() {
     }
     setSearchLoading(true);
     const timeout = setTimeout(() => {
-      searchTV(query)
-        .then((data) => setResults(data.results))
+      searchAll(query)
+        .then((data) => {
+          const filtered = data.results.filter(
+            (item) => item.media_type === "movie" || item.media_type === "tv",
+          );
+          setResults(filtered);
+        })
         .catch(console.error)
         .finally(() => setSearchLoading(false));
     }, 500);
@@ -63,8 +70,6 @@ export default function HomeScreen() {
   }, [query]);
 
   const isSearching = query.trim().length > 0;
-  {
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -86,7 +91,7 @@ export default function HomeScreen() {
         <View style={styles.searchRow}>
           <TextInput
             ref={inputRef}
-            placeholder="نام سریال مورد نظر را وارد نمایید..."
+            placeholder="Search movies and series..."
             placeholderTextColor="#777"
             value={query}
             onChangeText={setQuery}
@@ -111,7 +116,7 @@ export default function HomeScreen() {
               onPress={() =>
                 navigation.navigate("Title", {
                   id: item.id,
-                  type: "tv",
+                  type: item.media_type,
                 })
               }
             >
@@ -120,8 +125,18 @@ export default function HomeScreen() {
                 style={styles.searchPoster}
               />
               <View style={{ flex: 1 }}>
-                <Text style={styles.itemTitle}>
-                  {item.name}{" "}
+                <Text style={styles.itemTitle}>{item.name || item.title} </Text>
+                <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
+                  <Text
+                    style={[
+                      styles.typeBadge,
+                      item.media_type === "movie"
+                        ? styles.movieBadge
+                        : styles.tvBadge,
+                    ]}
+                  >
+                    {item.media_type === "movie" ? "Movie🎬" : "Series📺"}
+                  </Text>
                   <Text
                     style={{
                       color: "yellow",
@@ -130,10 +145,11 @@ export default function HomeScreen() {
                       textAlign: "right",
                     }}
                   >
-                    ({item.first_air_date.substring(0, 4)}) . IMDB ⭐{" "}
-                    {item.vote_average?.toFixed(1)}
+                    (
+                    {(item.first_air_date || item.release_date).substring(0, 4)}
+                    ) . IMDB ⭐ {item.vote_average?.toFixed(1)}
                   </Text>
-                </Text>
+                </View>
               </View>
             </Pressable>
           ))}
@@ -142,9 +158,9 @@ export default function HomeScreen() {
           (error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorIcon}>📡</Text>
-              <Text style={styles.errorTitle}>اتصال برقرار نشد. </Text>
+              <Text style={styles.errorTitle}>Unable to Connect</Text>
               <Text style={styles.errorSubtitle}>
-                اینترنت یا فیلترشکن خود را بررسی کنید.
+                Check your internet connection and try again.
               </Text>
               <Pressable
                 style={styles.retryBtn}
@@ -160,7 +176,7 @@ export default function HomeScreen() {
                     .finally(() => setLoading(false));
                 }}
               >
-                <Text style={styles.retryText}>تلاش مجدد</Text>
+                <Text style={styles.retryText}>Try Again</Text>
               </Pressable>
             </View>
           ) : loading ? (
@@ -168,7 +184,10 @@ export default function HomeScreen() {
           ) : (
             <>
               <TopRatedSlider data={topRated} />
-              <Text style={styles.sectionTitle}>جدیدترین سریال</Text>
+              <View style={styles.sectionTitleHeader}>
+                <Text style={styles.sectionTitle}>Trending Series</Text>
+                <View style={styles.sectionLine} />
+              </View>
 
               <FlatList
                 data={trendingSeries}
@@ -203,26 +222,67 @@ export default function HomeScreen() {
                   </Pressable>
                 )}
               />
+
+              <View style={styles.sectionTitleHeader}>
+                <Text style={styles.sectionTitle}>Trending Movies</Text>
+                <View style={styles.sectionLine} />
+              </View>
+              <FlatList
+                data={trendingMovies}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={{ paddingHorizontal: 4, gap: 12 }}
+                renderItem={({ item }) => {
+                  const rawDate = item.release_date || item.first_air_date;
+                  const isUnreleased = rawDate
+                    ? new Date(rawDate) > new Date()
+                    : false;
+
+                  return (
+                    <Pressable
+                      onPress={() =>
+                        navigation.navigate("Title", {
+                          id: item.id,
+                          type: "movie",
+                        })
+                      }
+                      style={styles.card}
+                    >
+                      <View>
+                        <Image
+                          source={{ uri: getImageUrl(item.poster_path) }}
+                          style={styles.poster}
+                        />
+                        {isUnreleased && (
+                          <View style={styles.comingSoonOverlay}>
+                            <Text style={styles.comingSoonText}>
+                              Coming Soon 🔒
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <TextTicker
+                        style={styles.cardTitle}
+                        duration={8000}
+                        loop
+                        bounce
+                        repeatSpacer={50}
+                        marqueeDelay={1000}
+                      >
+                        {item.title}
+                      </TextTicker>
+                      <Text style={styles.rating}>
+                        ⭐ {item.vote_average?.toFixed(1)}
+                      </Text>
+                    </Pressable>
+                  );
+                }}
+              />
             </>
           ))}
       </ScrollView>
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Open-source project. Contribute on GitHub.
-        </Text>
-
-        <Pressable
-          onPress={() =>
-            Linking.openURL(
-              "https://github.com/alirezaghnz/movie-tracker-native",
-            )
-          }
-          style={styles.githubBtn}
-        >
-          <Text style={styles.githubText}>View on GitHub</Text>
-        </Pressable>
-      </View>
-      <FavoriteFab />
     </SafeAreaView>
   );
 }
@@ -244,9 +304,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   discover: {
-    color: "#03a75a",
+    color: "#215ecf",
     fontSize: 26,
-    fontWeight: "700",
+    fontFamily: "Bebas",
   },
   profileBtn: {
     width: 40,
@@ -265,15 +325,22 @@ const styles = StyleSheet.create({
     flex: 1,
     color: "#fff",
     padding: 14,
-    fontFamily: "IRANSans",
+  },
+  sectionTitleHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
   },
   sectionTitle: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
-    fontFamily: "IRANSans",
-    marginBottom: 12,
-    textAlign: "right",
+    fontSize: 32,
+    fontFamily: "Bebas",
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#222",
   },
   item: {
     flexDirection: "row-reverse",
@@ -288,6 +355,21 @@ const styles = StyleSheet.create({
     height: 66,
     borderRadius: 6,
     backgroundColor: "#1a1a1a",
+  },
+  typeBadge: {
+    fontSize: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  movieBadge: {
+    backgroundColor: "rgba(229,9,20,0.2)",
+    color: "#e50914",
+  },
+  tvBadge: {
+    backgroundColor: "rgba(59,130,246,0.2)",
+    color: "#3b82f6",
   },
   itemTitle: {
     color: "#fff",
@@ -349,7 +431,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#111",
-    borderRadius: 12,
+    borderRadius: 30,
     borderWidth: 1,
     borderColor: "#222",
     marginBottom: 16,
@@ -383,7 +465,6 @@ const styles = StyleSheet.create({
   errorTitle: {
     color: "#fff",
     fontSize: 18,
-    fontFamily: "IRANSans",
   },
   errorSubtitle: {
     color: "#666",
@@ -405,5 +486,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontFamily: "IRANSans",
+  },
+  comingSoonOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  comingSoonText: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: "Bebas",
+    textAlign: "center",
   },
 });

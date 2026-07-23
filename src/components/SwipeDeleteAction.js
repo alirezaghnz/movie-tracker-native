@@ -11,7 +11,7 @@ export default function SwipeDeleteAction({ dragX, onDelete }) {
     <Pressable style={styles.deleteBox} onPress={onDelete}>
       <Animated.View style={{ transform: [{ scale }] }}>
         <MaterialIcons name="delete" size={24} color="#fff" />
-        <Text style={styles.deleteText}>حذف</Text>
+        <Text style={styles.deleteText}>Delete</Text>
       </Animated.View>
     </Pressable>
   );

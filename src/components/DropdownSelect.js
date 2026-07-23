@@ -71,12 +71,11 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "#aaa",
-    fontSize: 12,
-    marginBottom: 0,
-    textAlign: "right",
+    fontSize: 16,
+    marginBottom: 4,
   },
   selectBtn: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#111",
@@ -85,6 +84,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 10,
+    borderEndEndRadius: 0,
+    borderStartEndRadius: 0,
   },
   value: {
     color: "#fff",
@@ -96,14 +97,15 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     position: "absolute",
-    top: 48,
+    top: 63,
     left: 0,
     right: 0,
     zIndex: 9999,
     elevation: 9999,
     backgroundColor: "#111",
-    borderRadius: 10,
+    borderRadius: 0,
     borderWidth: 1,
+    borderTopWidth: 0,
     borderColor: "#222",
     overflow: "hidden",
   },
@@ -113,7 +115,6 @@ const styles = StyleSheet.create({
   },
   optionText: {
     color: "#ccc",
-    textAlign: "right",
     fontSize: 14,
   },
   active: {

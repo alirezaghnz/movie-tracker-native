@@ -10,11 +10,12 @@ import {
 import { useKeepAwake } from "expo-keep-awake";
 
 import { useRoute } from "@react-navigation/native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getSourceUrl, PLAYER_SOURCES } from "../services/api/watch";
 import WebView from "react-native-webview";
 
 import { getImageUrl } from "../services/api/tmdb";
+import { addToRecentlyWatched } from "../storage/RecentlyStorage";
 
 const TODAY = (() => {
   const d = new Date();
@@ -30,23 +31,89 @@ const AD_BLOCKS = [
 ];
 const INJECTED_JS = `
   window.open = () => null;
-    setInterval(() => {
-      document.querySelectorAll('iframe:not([src*="embed"]), div[class*="popup"]')
-        .forEach(el => el.remove());
-    }, 1000);
-    true;
+
+  setInterval(() => {
+    document.querySelectorAll('iframe:not([src*="embed"]), div[class*="popup"]')
+      .forEach(el => el.remove());
+  }, 1000);
+
+  // when the action play, call the react native 
+  const detectPlay = () => {
+    const videos = document.querySelectorAll('video');
+    videos.forEach(video => {
+      if (!video._watchTracked) {
+        video._watchTracked = true;
+        video.addEventListener('play', () => {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIDEO_PLAYING' }));
+        });
+      }
+    });
+  };
+
+  
+  setInterval(detectPlay, 2000);
+
+  true;
 `;
 
 export default function PlayerScreen() {
   useKeepAwake();
   const route = useRoute();
-  const { id, type, season, ep, episodes = [] } = route.params || {};
+  const {
+    id,
+    type,
+    season,
+    ep,
+    episodes = [],
+    title,
+    poster_path,
+    first_air_date,
+    release_date,
+  } = route.params || {};
   const [sourceId, setSourceId] = useState("videasy");
   const [currentEp, setCurrentEp] = useState(ep);
+  const [hasTracked, setHasTracked] = useState(false);
 
   const url = getSourceUrl(sourceId, type, id, season, currentEp);
-  const handleEpisodePress = (episode) => {
+  const handleEpisodePress = async (episode) => {
+    setHasTracked(false); // need to reset for new ep
     setCurrentEp(episode.episode_number);
+  };
+
+  useEffect(() => {
+    if (type !== "movie") return;
+
+    addToRecentlyWatched({
+      id,
+      type,
+      title,
+      poster_path,
+      release_date,
+      visitedAt: Date.now(),
+    });
+  }, []);
+
+  const handleWebViewMessage = async (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === "VIDEO_PLAYING" && !hasTracked) {
+        setHasTracked(true);
+        const currentEpisode = episodes.find(
+          (e) => e.episode_number === currentEp,
+        );
+        await addToRecentlyWatched({
+          id,
+          type,
+          season,
+          episode_number: currentEp,
+          episode_name: currentEpisode?.name ?? "",
+          title,
+          poster_path,
+          first_air_date,
+          visitedAt: Date.now(),
+        });
+      }
+    } catch {}
   };
 
   return (
@@ -61,10 +128,11 @@ export default function PlayerScreen() {
           allowsFullscreenVideo
           mediaPlaybackRequiresUserAction={false}
           style={{ flex: 1 }}
+          onMessage={handleWebViewMessage}
         />
       </View>
       <View style={styles.sourceBar}>
-        <Text style={styles.sourceLabel}>منبع پخش:</Text>
+        <Text style={styles.sourceLabel}>Sources:</Text>
         <View style={styles.sourceBtns}>
           {PLAYER_SOURCES.map((src) => (
             <Pressable
@@ -183,10 +251,9 @@ const styles = StyleSheet.create({
   },
   sourceLabel: {
     color: "#666",
-    fontSize: 15,
+    fontSize: 18,
     marginBottom: 10,
-    textAlign: "right",
-    fontFamily: "IRANSans",
+    fontFamily: "Bebas",
   },
   sourceBtns: { flexDirection: "row", gap: 8 },
   sourceBtn: {

@@ -2,7 +2,7 @@
   "expo": {
     "name": "IronBranch",
     "slug": "ironbranch-player",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,9 +24,7 @@
       "edgeToEdgeEnabled": true,
       "package": "com.alireza0x86.ironbranchplayer"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
+
     "extra": {
       "eas": {
         "projectId": "a90f4a94-8e4d-4456-a1f3-b33ffaface4f"

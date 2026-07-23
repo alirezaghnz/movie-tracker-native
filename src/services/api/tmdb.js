@@ -57,6 +57,11 @@ export const getTVDetails = (tmdbId) => {
   return fetchTMDB(`/tv/${tmdbId}`);
 };
 
+//Movie details
+export const getMovieDetails = (tmdbId) => {
+  return fetchTMDB(`/movie/${tmdbId}`);
+};
+
 // image url fetch with tmdb
 export const getImageUrl = (path, size = "w500") => {
   return path ? `${IMG_BASE}/${size}${path}` : null;
@@ -69,6 +74,10 @@ export const getTVSeasonsDetails = (tvId, seasonNumber) => {
 export const searchTV = (query) => {
   return fetchTMDB(`/search/tv?query=${encodeURIComponent(query)}`);
 };
+export const searchAll = (query) => {
+  return fetchTMDB(`/search/multi?query=${encodeURIComponent(query)}`);
+};
+
 export const getTopRatedTV = () => {
   return fetchTMDB("/tv/top_rated?page=1");
 };

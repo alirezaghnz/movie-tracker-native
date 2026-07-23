@@ -45,7 +45,7 @@ export default function TopRatedSlider({ data }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>سریال های برتر</Text>
+      <Text style={styles.sectionTitle}>Top Rated</Text>
 
       <Animated.FlatList
         ref={flatListRef}
@@ -153,11 +153,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: "#fff",
-    fontSize: 18,
-    fontFamily: "IRANSans",
+    fontSize: 32,
+    fontFamily: "Bebas",
     marginBottom: 12,
-    paddingHorizontal: 20,
-    textAlign: "right",
+    paddingHorizontal: 2,
   },
   cardWrapper: {
     width: CARD_WIDTH,

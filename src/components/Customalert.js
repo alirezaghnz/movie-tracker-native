@@ -10,25 +10,30 @@ import {
 
 const AlertContext = createContext(null);
 
-export function AlertProvider({ children }) {
-  const [alert, setAlert] = useState(null); // { title, body, type }
+const TYPES = {
+  error: { border: "#e5484d", bg: "rgba(229,72,77,0.12)", icon: "!" },
+  success: { border: "#2dd4bf", bg: "rgba(45,212,191,0.12)", icon: "✓" },
+  info: { border: "#3b82f6", bg: "rgba(59,130,246,0.12)", icon: "i" },
+};
 
-  const translateY = useRef(new Animated.Value(-150)).current;
+export function AlertProvider({ children }) {
+  const [alert, setAlert] = useState(null);
+  const translateY = useRef(new Animated.Value(-120)).current;
   const timerRef = useRef(null);
 
   const showAlert = ({ title, body, type = "error" }) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setAlert({ title, body, type });
+    translateY.setValue(-120);
 
-    translateY.setValue(-150);
     Animated.spring(translateY, {
       toValue: 0,
       useNativeDriver: true,
-      damping: 16,
-      stiffness: 180,
+      damping: 18,
+      stiffness: 200,
     }).start();
 
-    timerRef.current = setTimeout(() => hideAlert(), 4000);
+    timerRef.current = setTimeout(hideAlert, 4000);
   };
 
   const hideAlert = () => {
@@ -37,8 +42,8 @@ export function AlertProvider({ children }) {
       timerRef.current = null;
     }
     Animated.timing(translateY, {
-      toValue: -150,
-      duration: 220,
+      toValue: -120,
+      duration: 200,
       useNativeDriver: true,
     }).start(() => setAlert(null));
   };
@@ -46,7 +51,6 @@ export function AlertProvider({ children }) {
   return (
     <AlertContext.Provider value={{ showAlert }}>
       {children}
-
       <Modal
         visible={!!alert}
         transparent
@@ -54,7 +58,7 @@ export function AlertProvider({ children }) {
         statusBarTranslucent
         onRequestClose={hideAlert}
       >
-        <View style={styles.modalRoot} pointerEvents="box-none">
+        <View style={styles.root} pointerEvents="box-none">
           {alert && (
             <Animated.View
               style={[styles.wrapper, { transform: [{ translateY }] }]}
@@ -62,24 +66,39 @@ export function AlertProvider({ children }) {
             >
               <Pressable
                 onPress={hideAlert}
-                style={[styles.card, styles[`card_${alert.type}`]]}
+                style={[
+                  styles.card,
+                  { borderColor: TYPES[alert.type]?.border ?? "#444" },
+                ]}
               >
-                <View style={[styles.iconCircle, styles[`icon_${alert.type}`]]}>
-                  <Text style={styles.iconText}>
-                    {alert.type === "error"
-                      ? "!"
-                      : alert.type === "success"
-                        ? "✓"
-                        : "i"}
+                <View
+                  style={[
+                    styles.icon,
+                    { backgroundColor: TYPES[alert.type]?.bg ?? "transparent" },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.iconText,
+                      { color: TYPES[alert.type]?.border ?? "#fff" },
+                    ]}
+                  >
+                    {TYPES[alert.type]?.icon ?? "!"}
                   </Text>
                 </View>
 
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.title}>{alert.title}</Text>
+                <View style={styles.content}>
+                  <Text style={styles.title} numberOfLines={1}>
+                    {alert.title}
+                  </Text>
                   {!!alert.body && (
-                    <Text style={styles.body}>{alert.body}</Text>
+                    <Text style={styles.body} numberOfLines={2}>
+                      {alert.body}
+                    </Text>
                   )}
                 </View>
+
+                <Text style={styles.close}>×</Text>
               </Pressable>
             </Animated.View>
           )}
@@ -89,78 +108,69 @@ export function AlertProvider({ children }) {
   );
 }
 
-// alert custom hook
 export function useAlert() {
   const ctx = useContext(AlertContext);
-  if (!ctx) {
-    throw new Error("useAlert باید داخل AlertProvider استفاده بشه");
-  }
+  if (!ctx) throw new Error("useAlert must be used inside AlertProvider");
   return ctx;
 }
 
 const styles = StyleSheet.create({
-  modalRoot: {
+  root: {
     flex: 1,
     backgroundColor: "transparent",
   },
   wrapper: {
     position: "absolute",
-    top: 50,
-    left: 16,
-    right: 16,
-    zIndex: 999,
+    top: 52,
+    left: 14,
+    right: 14,
   },
   card: {
-    flexDirection: "row-reverse",
-    alignItems: "flex-start",
-    gap: 12,
-    backgroundColor: "#1c1c1e",
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: "#2c2c2e",
-  },
-  card_error: { borderColor: "#e5484d" },
-  card_success: { borderColor: "#2dd4bf" },
-  card_info: { borderColor: "#3b82f6" },
-
-  iconCircle: {
-    width: 28,
-    height: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#18181b",
     borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    elevation: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+  },
+  icon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
+    flexShrink: 0,
   },
-  icon_error: { backgroundColor: "rgba(229, 72, 77, 0.15)" },
-  icon_success: { backgroundColor: "rgba(45, 212, 191, 0.15)" },
-  icon_info: { backgroundColor: "rgba(59, 130, 246, 0.15)" },
   iconText: {
-    color: "#fff",
+    fontSize: 13,
     fontWeight: "700",
-    fontSize: 14,
-    fontFamily: "IRANSans",
   },
-
+  content: {
+    flex: 1,
+  },
   title: {
     color: "#fff",
-    fontSize: 14.5,
-    fontFamily: "IRANSans",
-    textAlign: "right",
-    writingDirection: "rtl",
-    marginBottom: 2,
+    fontSize: 13.5,
+    fontWeight: "600",
   },
   body: {
-    color: "#b5b5ba",
-    fontSize: 13,
-    fontFamily: "IRANSans",
+    color: "#a1a1aa",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  close: {
+    color: "#52525b",
+    fontSize: 18,
     lineHeight: 20,
-    textAlign: "right",
-    writingDirection: "rtl",
+    paddingLeft: 4,
+    flexShrink: 0,
   },
 });
