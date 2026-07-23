@@ -5,15 +5,24 @@ import {
   TextInput,
   View,
   ActivityIndicator,
+  Pressable,
+  Alert,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { UpdateChecker } from "../components/UpdateChecker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAlert } from "../components/Customalert";
+import { secureStorage } from "../storage/secureStorageTMDB";
+
 export default function ProfileScreen() {
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(true);
+  const { showAlert } = useAlert();
+  const queryClient = useQueryClient();
 
   const maskToken = (token) => {
     if (!token) return "";
@@ -35,6 +44,44 @@ export default function ProfileScreen() {
 
     loadToken();
   }, []);
+
+  const handleReset = () => {
+    Alert.alert(
+      "Reset App data",
+      "This will clear your watch history, favorites, and cached data. Your TMDB token will be kept.\n\nAre you sure?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // tmdb token need to be kept
+              const token = await secureStorage.get("tmdb_token");
+              await AsyncStorage.clear();
+              if (token) {
+                await SecureStore.setItemAsync("tmdb_token", token);
+              }
+              // queryClient.clear();
+
+              showAlert({
+                title: "App Reset",
+                body: "All data cleared successfully",
+                type: "success",
+              });
+            } catch (err) {
+              console.log(err);
+              showAlert({
+                title: "Error",
+                body: "Something went wrong",
+                type: "error",
+              });
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -109,6 +156,17 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+        <View style={styles.card}>
+          <Text style={{ color: "#fff", fontSize: 17, fontWeight: "600" }}>
+            App Data
+          </Text>
+          <Text style={styles.helper}>
+            Clear Watch history, favorites, and catched data
+          </Text>
+          <Pressable style={styles.resetBtn} onPress={handleReset}>
+            <Text style={styles.resetText}>Reset App Data</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -170,5 +228,20 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 11,
     marginBottom: 4,
+  },
+  resetBtn: {
+    marginTop: 12,
+    backgroundColor: "#1a1a1a",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#3a1a1a",
+    alignItems: "center",
+  },
+  resetText: {
+    color: "#e50914",
+    fontSize: 16,
+    fontFamily: "Bebas",
   },
 });
