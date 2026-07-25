@@ -167,10 +167,15 @@ export default function HomeScreen() {
                 onPress={() => {
                   setError(false);
                   setLoading(true);
-                  Promise.all([getTrending("tv", "day"), getTopRatedTV()])
+                  Promise.all([
+                    getTrending("tv", "day"),
+                    getTopRatedTV(),
+                    getTrending("movie", "day"),
+                  ])
                     .then(([trending, topRatedData]) => {
                       setTrendingSeries(trending.results);
                       setTopRated(topRatedData.results?.slice(0, 10) ?? []);
+                      setTrendingMovies(trending.results);
                     })
                     .catch(() => setError(true))
                     .finally(() => setLoading(false));
