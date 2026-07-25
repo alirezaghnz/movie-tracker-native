@@ -34,21 +34,27 @@ export default function HomeScreen() {
   const [error, setError] = useState(false);
   const inputRef = useRef(null); // for focus on input
 
-  useEffect(() => {
-    Promise.all([getTrending("tv", "day"), getTrending("movie", "day")])
-      .then(([tvData, movieData]) => {
+  const fetchData = () => {
+    setError(false);
+    setLoading(true);
+    Promise.all([
+      getTrending("tv", "day"),
+      getTrending("movie", "day"),
+      getTopRatedTV(),
+    ])
+      .then(([tvData, movieData, topRatedData]) => {
         setTrendingSeries(tvData.results);
         setTrendingMovies(movieData.results);
+        setTopRated(topRatedData.results?.slice(0, 10) ?? []);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   useEffect(() => {
-    getTopRatedTV()
-      .then((data) => setTopRated(data.results?.slice(0, 10) ?? []))
-      .catch(console.erro);
+    fetchData();
   }, []);
+
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
@@ -162,25 +168,7 @@ export default function HomeScreen() {
               <Text style={styles.errorSubtitle}>
                 Check your internet connection and try again.
               </Text>
-              <Pressable
-                style={styles.retryBtn}
-                onPress={() => {
-                  setError(false);
-                  setLoading(true);
-                  Promise.all([
-                    getTrending("tv", "day"),
-                    getTopRatedTV(),
-                    getTrending("movie", "day"),
-                  ])
-                    .then(([trending, topRatedData]) => {
-                      setTrendingSeries(trending.results);
-                      setTopRated(topRatedData.results?.slice(0, 10) ?? []);
-                      setTrendingMovies(trending.results);
-                    })
-                    .catch(() => setError(true))
-                    .finally(() => setLoading(false));
-                }}
-              >
+              <Pressable style={styles.retryBtn} onPress={fetchData}>
                 <Text style={styles.retryText}>Try Again</Text>
               </Pressable>
             </View>
