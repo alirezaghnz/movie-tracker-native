@@ -215,7 +215,7 @@ export default function PlayerScreen() {
                 <View style={styles.episodeInfo}>
                   <Text style={styles.episodeNumber}>
                     {" "}
-                    قسمت {item.episode_number}
+                    Episode {item.episode_number}
                   </Text>
                   <Text style={styles.episodeTitle}>{item.name}</Text>
                   {item.air_date && (
@@ -315,15 +315,12 @@ const styles = StyleSheet.create({
   episodeNumber: {
     color: "#e50914",
     fontSize: 11,
-    fontFamily: "IRANSans",
-    textAlign: "right",
+    fontFamily: "Bebas",
     marginBottom: 3,
   },
   episodeTitle: {
     color: "#fff",
     fontSize: 13,
-
-    fontFamily: "IRANSans",
   },
   episodeDate: { color: "#555", fontSize: 10, marginTop: 4 },
 });
