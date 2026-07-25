@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Pressable,
   Alert,
+  Linking,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { UpdateChecker } from "../components/UpdateChecker";
@@ -138,7 +139,12 @@ export default function ProfileScreen() {
                 Open an issue or browse the README on GitHub
               </Text>
             </View>
-            <View
+            <Pressable
+              onPress={() =>
+                Linking.openURL(
+                  "https://github.com/alirezaghnz/movie-tracker-native",
+                )
+              }
               style={{
                 borderWidth: 1,
                 borderColor: "#333",
@@ -153,7 +159,7 @@ export default function ProfileScreen() {
             >
               <Text style={{ color: "#fff", fontSize: 11 }}>Github</Text>
               <AntDesign name="github" size={11} color="white" />
-            </View>
+            </Pressable>
           </View>
         </View>
         <View style={styles.card}>
