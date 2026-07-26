@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function ErrorContainer({
-  message = " مشکلی پیش آمده است. لطفا دوباره تلاش کنید",
+  message = "Something went wrong",
   onRetry,
   onBack,
 }) {
@@ -11,13 +11,13 @@ export default function ErrorContainer({
       <View style={styles.actions}>
         {onRetry && (
           <Pressable style={styles.btn} onPress={onRetry}>
-            <Text style={styles.btnText}>تلاش مجدد</Text>
+            <Text style={styles.btnText}>Try Again</Text>
           </Pressable>
         )}
 
         {onBack && (
           <Pressable style={[styles.btn, styles.outline]} onPress={onBack}>
-            <Text style={styles.outlineText}>بازگشت به خانه</Text>
+            <Text style={styles.outlineText}>Back To Home</Text>
           </Pressable>
         )}
       </View>

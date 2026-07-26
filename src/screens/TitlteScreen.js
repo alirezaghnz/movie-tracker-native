@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -48,12 +48,12 @@ export default function TitleScreen() {
 
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    const fetchDetails = type === "movie" ? getMovieDetails : getTVDetails;
-    fetchDetails(id)
+  const fetchDetails = useCallback(() => {
+    setLoading(true);
+    const fetcher = type === "movie" ? getMovieDetails : getTVDetails;
+    fetcher(id)
       .then((data) => {
         setDetails(data);
-
         // just for tv series
         if (type === "tv") {
           const firstSeason = data.seasons?.find((s) => s.season_number > 0);
@@ -65,6 +65,10 @@ export default function TitleScreen() {
       })
       .finally(() => setLoading(false));
   }, [id, type]);
+
+  useEffect(() => {
+    fetchDetails();
+  }, [fetchDetails]);
 
   useEffect(() => {
     if (!id || !season || type !== "tv") return;
@@ -128,7 +132,13 @@ export default function TitleScreen() {
       </View>
     );
   }
-  if (!details) return <ErrorContainer />;
+  if (!details)
+    return (
+      <ErrorContainer
+        onRetry={fetchDetails}
+        onBack={() => navigation.goBack()}
+      />
+    );
 
   return (
     <View style={styles.container}>
