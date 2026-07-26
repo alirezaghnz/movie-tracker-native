@@ -234,6 +234,7 @@ export default function HomeScreen() {
 
                   return (
                     <Pressable
+                      disabled={isUnreleased}
                       onPress={() =>
                         navigation.navigate("Title", {
                           id: item.id,
