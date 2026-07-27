@@ -7,6 +7,7 @@ import ProfileScreen from "../screens/ProfileScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialIcons } from "@expo/vector-icons";
 import RecentlyScreen from "../screens/RecentlyScreen";
+import { wp } from "../utils/responsive";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -33,15 +34,15 @@ export default function MainNavigator() {
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          bottom: 30,
-          marginHorizontal: 50,
+          bottom: wp(30),
+          marginHorizontal: wp(50),
           borderRadius: 30,
           backgroundColor: "rgba(20, 20, 20, 0.98)",
           borderWidth: 1,
           borderColor: "rgba(255, 255, 255, 0.08)",
           height: 60,
-          paddingBottom: 8,
-          paddingTop: 4,
+          paddingBottom: wp(8),
+          paddingTop: wp(4),
           shadowColor: "#000",
           shadowOpacity: 0.1,
           shadowRadius: 12,

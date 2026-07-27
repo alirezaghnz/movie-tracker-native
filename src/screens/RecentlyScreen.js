@@ -14,11 +14,14 @@ import {
   getRecentlyWatched,
 } from "../storage/RecentlyStorage";
 import { getTimeAgo } from "../utils/date";
+import { fp, wp } from "../utils/responsive";
+import { SafeAreaView } from "react-native-safe-area-context";
+import ActionModal from "../components/ActionModal";
 
 export default function RecentlyScreen() {
   const navigation = useNavigation();
   const [items, setItems] = useState([]);
-
+  const [showClearModal, setShowClearModal] = useState(false);
   // fetch recently watched items when the screen is focused
   useFocusEffect(
     // useCallback is used to memoize the callback function so that it doesn't get recreated on every render
@@ -27,7 +30,7 @@ export default function RecentlyScreen() {
     }, []),
   );
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View>
           <Text style={styles.libTitle}>MY LIBRARY</Text>
@@ -37,7 +40,7 @@ export default function RecentlyScreen() {
         </View>
         <Pressable
           style={styles.clearBtnWrapper}
-          onPress={() => clearRecentlyWatched().then(() => setItems([]))}
+          onPress={() => setShowClearModal(true)}
         >
           <Text style={styles.clearBtn}>Clear</Text>
         </Pressable>
@@ -53,10 +56,10 @@ export default function RecentlyScreen() {
           numColumns={2}
           columnWrapperStyle={{
             justifyContent: "space-between",
-            marginBottom: 12,
+            marginBottom: wp(12),
           }}
           contentContainerStyle={{
-            padding: 16,
+            padding: wp(16),
           }}
           renderItem={({ item }) => (
             <Pressable
@@ -89,11 +92,15 @@ export default function RecentlyScreen() {
                     flexDirection: "row",
                     alignItems: "center",
                     gap: 2,
-                    marginTop: 4,
+                    marginTop: wp(4),
                   }}
                 >
                   <Text
-                    style={{ color: "#e50914", fontSize: 11, marginTop: 2 }}
+                    style={{
+                      color: "#e50914",
+                      fontSize: fp(10.5),
+                      marginTop: 2,
+                    }}
                   >
                     {item.type === "tv"
                       ? `S${item.season} · E${item.episode_number}`
@@ -110,7 +117,9 @@ export default function RecentlyScreen() {
                   )}
                 </View>
 
-                <Text style={{ color: "#777", fontSize: 11, marginTop: 3 }}>
+                <Text
+                  style={{ color: "#777", fontSize: fp(10.5), marginTop: 3 }}
+                >
                   {getTimeAgo(item.visitedAt)}
                 </Text>
               </View>
@@ -118,7 +127,20 @@ export default function RecentlyScreen() {
           )}
         />
       )}
-    </View>
+      <ActionModal
+        isVisible={showClearModal}
+        onClose={() => setShowClearModal(false)}
+        onConfirm={async () => {
+          await clearRecentlyWatched();
+          setItems([]);
+          setShowClearModal(false);
+        }}
+        title="Clear History"
+        message="Are you sure you want to clear your watch history?"
+        confirmText="Clear"
+        cancelText="Cancel"
+      />
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
@@ -129,32 +151,32 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 16,
+    paddingHorizontal: wp(20),
+    paddingTop: wp(10),
+    paddingBottom: wp(16),
     alignItems: "flex-end",
   },
   libTitle: {
     color: "#fff",
-    fontSize: 38,
+    fontSize: fp(30),
     fontFamily: "Bebas",
     marginBottom: 4,
   },
   libSub: {
     color: "#909090",
-    fontSize: 15,
+    fontSize: fp(13),
   },
   clearBtnWrapper: {
     borderColor: "#333",
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: wp(12),
+    paddingVertical: wp(6),
     marginBottom: 4,
   },
   clearBtn: {
     color: "#e50914",
-    fontSize: 14,
+    fontSize: fp(13),
   },
   emptyContainer: {
     flex: 1,
@@ -163,29 +185,29 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: "#909090",
-    fontSize: 16,
+    fontSize: fp(15),
   },
   itemRecently: {
     width: "48%",
     backgroundColor: "#111",
     borderRadius: 12,
-    padding: 12,
+    padding: wp(12),
   },
   posterContainer: {
     position: "relative",
   },
   typeTag: {
     position: "absolute",
-    top: 8,
-    right: 8,
+    top: wp(8),
+    right: wp(8),
     backgroundColor: "rgba(0,0,0,0.75)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: wp(6),
+    paddingVertical: wp(2),
     borderRadius: 6,
   },
   typeTextTag: {
     color: "#fff",
-    fontSize: 10,
+    fontSize: fp(9),
     fontWeight: "700",
   },
   poster: {
@@ -195,16 +217,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#1a1a1a",
   },
   itemInfo: {
-    marginTop: 10,
+    marginTop: wp(10),
   },
   itemTitle: {
     color: "#fff",
-    fontSize: 15,
+    fontSize: fp(14),
     fontWeight: "600",
   },
   itemYear: {
     color: "#666",
-    fontSize: 11,
+    fontSize: fp(10.5),
     marginTop: 4,
   },
 });

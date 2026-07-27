@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  SafeAreaView,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -16,8 +17,10 @@ import { useFavorites } from "../hooks/useFavorites";
 import { useCallback, useRef, useState } from "react";
 import { Swipeable } from "react-native-gesture-handler";
 import SwipeDeleteAction from "../components/SwipeDeleteAction";
-import ErrorModal from "../components/ErrorModal";
+
 import { getImageUrl } from "../services/api/tmdb";
+import { fp, hp, wp } from "../utils/responsive";
+import ActionModal from "../components/ActionModal";
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 export function FavoriteScreen() {
@@ -298,7 +301,7 @@ export function FavoriteScreen() {
     );
   }
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <HeaderComponent />
       <AnimatedFlatList
         data={favorites}
@@ -317,15 +320,17 @@ export function FavoriteScreen() {
           <ActivityIndicator size="large" color="#e50914" />
         </View>
       )}
-      <ErrorModal
+      <ActionModal
         isVisible={showConfirmClear}
         onClose={() => setShowConfirmClear(false)}
-        handleClearFavorites={async () => {
+        onConfirm={async () => {
           await clearFavorites();
           setShowConfirmClear(false);
         }}
+        title="Delete Favorites"
+        message="Are you sure you want to delete all favorites? "
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -333,15 +338,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    padding: 40,
+    paddingVertical: wp(40),
+    paddingHorizontal: wp(10),
   },
   header: {
     backgroundColor: "#0a0a0a",
     borderBottomWidth: 1,
     borderBottomColor: "#1a1a1a",
     justifyContent: "flex-end",
-    paddingHorizontal: 10,
-    paddingBottom: 8,
+    paddingHorizontal: wp(10),
+    paddingBottom: wp(8),
   },
   headerContent: {
     flexDirection: "row",
@@ -351,16 +357,15 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: "#ffee00",
-    fontSize: 38,
+    fontSize: fp(38),
     fontFamily: "Bebas",
   },
   headerCount: {
     color: "#999",
-    fontSize: 14,
-    fontFamily: "IRANSans",
+    fontSize: fp(14),
     backgroundColor: "#1a1a1a",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: wp(12),
+    paddingVertical: wp(6),
     borderRadius: 20,
     overflow: "hidden",
   },
@@ -373,7 +378,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: wp(8),
     marginLeft: 8,
     borderRadius: 8,
     backgroundColor: "#1a1a1a",
@@ -381,7 +386,7 @@ const styles = StyleSheet.create({
   headerButtonText: {
     color: "#666",
     marginLeft: 6,
-    fontSize: 14,
+    fontSize: fp(14),
   },
   deleteButton: {
     backgroundColor: "#2a1a1a",
@@ -390,9 +395,9 @@ const styles = StyleSheet.create({
     color: "#ff4444",
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingHorizontal: wp(20),
+    paddingTop: wp(10),
+    paddingBottom: wp(20),
   },
   item: {
     backgroundColor: "#0a0a0a",
@@ -423,25 +428,25 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: fp(16),
     fontWeight: "500",
     marginBottom: 8,
     writingDirection: "rtl",
   },
   yearBadge: {
     backgroundColor: "#1a1a1a",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: wp(10),
+    paddingVertical: wp(4),
     borderRadius: 6,
     alignSelf: "flex-start",
   },
   yearText: {
     color: "#c5f31d",
-    fontSize: 12,
+    fontSize: fp(12),
   },
   poster: {
-    width: 50,
-    height: 70,
+    width: wp(50),
+    height: hp(70),
     borderRadius: 6,
     marginLeft: 12,
   },
@@ -457,7 +462,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     color: "#fff",
-    fontSize: 38,
+    fontSize: fp(38),
     fontFamily: "Bebas",
     marginTop: 20,
     marginBottom: 10,

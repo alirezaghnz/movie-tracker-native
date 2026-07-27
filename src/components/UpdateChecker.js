@@ -2,6 +2,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useAlert } from "../components/Customalert";
 import { checkForUpdate, getCurrentVersion } from "../utils/updateChecker";
 import { useState } from "react";
+import { fp, wp } from "../utils/responsive";
 
 export function UpdateChecker() {
   const { showAlert } = useAlert();
@@ -84,25 +85,25 @@ const styles = StyleSheet.create({
   },
   versionRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
   },
   versionLabel: {
     color: "#888",
-    fontSize: 12,
+    fontSize: fp(12),
     fontWeight: "600",
   },
   versionBadge: {
     backgroundColor: "#244224",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: wp(12),
+    paddingVertical: wp(4),
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#333",
   },
   versionText: {
     color: "#aaa",
-    fontSize: 12,
+    fontSize: fp(12),
     fontWeight: "600",
   },
   resultRow: {
@@ -110,12 +111,12 @@ const styles = StyleSheet.create({
   },
   resultText: {
     color: "#666",
-    fontSize: 11,
+    fontSize: fp(11),
   },
   button: {
     backgroundColor: "#d42929",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: wp(12),
+    paddingHorizontal: wp(20),
     borderRadius: 12,
     alignItems: "center",
     marginTop: 5,
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: fp(14),
     fontWeight: 600,
   },
 });

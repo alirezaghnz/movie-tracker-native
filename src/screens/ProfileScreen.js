@@ -15,15 +15,17 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useQueryClient } from "@tanstack/react-query";
+//import { useQueryClient } from "@tanstack/react-query";
 import { useAlert } from "../components/Customalert";
 import { secureStorage } from "../storage/secureStorageTMDB";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { fp, wp } from "../utils/responsive";
 
 export default function ProfileScreen() {
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlert();
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const maskToken = (token) => {
     if (!token) return "";
@@ -85,7 +87,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {/**    <View style={{ top: 40, left: 10 }}>
         <BackButton />
       </View> **/}
@@ -95,7 +97,8 @@ export default function ProfileScreen() {
         style={{
           borderWidth: 1,
           borderRadius: 20,
-          padding: 10,
+          paddingHorizontal: wp(10),
+          paddingVertical: wp(12),
           backgroundColor: "#2e2525",
           gap: 9,
         }}
@@ -131,7 +134,7 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.card}>
           <View style={styles.HeaderCard}>
-            <View style={{ gap: 2 }}>
+            <View style={{ gap: 2, flex: 1 }}>
               <Text style={{ color: "#fff", fontWeight: "600" }}>
                 Need help or found a bug?
               </Text>
@@ -149,21 +152,21 @@ export default function ProfileScreen() {
                 borderWidth: 1,
                 borderColor: "#333",
                 borderRadius: 6,
-                paddingVertical: 4,
-                paddingHorizontal: 8,
+                paddingVertical: wp(6),
+                paddingHorizontal: wp(8),
                 justifyContent: "space-between",
                 flexDirection: "row",
-                alignItems: "center",
+                alignItems: "flex-start",
                 gap: 4,
               }}
             >
-              <Text style={{ color: "#fff", fontSize: 11 }}>Github</Text>
+              <Text style={{ color: "#fff", fontSize: fp(11) }}>Github</Text>
               <AntDesign name="github" size={11} color="white" />
             </Pressable>
           </View>
         </View>
         <View style={styles.card}>
-          <Text style={{ color: "#fff", fontSize: 17, fontWeight: "600" }}>
+          <Text style={{ color: "#fff", fontSize: fp(17), fontWeight: "600" }}>
             App Data
           </Text>
           <Text style={styles.helper}>
@@ -174,7 +177,7 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -182,64 +185,65 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0B0B0B",
-    padding: 20,
+    paddingHorizontal: wp(20),
+    paddingTop: wp(12),
   },
   title: {
     color: "#FFF",
-    fontSize: 40,
-    marginTop: 50,
-    marginBottom: 24,
+    fontSize: fp(36),
+    marginBottom: wp(10),
     fontFamily: "Bebas",
   },
   card: {
     backgroundColor: "#161616",
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 14,
+    paddingHorizontal: wp(16),
+    paddingVertical: wp(16),
     borderWidth: 1,
     borderColor: "#242424",
   },
   label: {
     color: "#AAA",
-    fontSize: 15,
-    fontFamily: "IRANSans",
+    fontSize: fp(15),
     marginBottom: 10,
   },
   input: {
     backgroundColor: "#1F1F1F",
     color: "#FFF",
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 10,
+    paddingVertical: wp(12),
+    paddingHorizontal: wp(12),
     minHeight: 40,
   },
   helper: {
     color: "#777",
-    fontSize: 12,
+    fontSize: fp(12),
     marginTop: 10,
-    lineHeight: 20,
+    lineHeight: wp(18),
   },
 
   HeaderCard: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    marginBottom: 4,
+    gap: 12,
   },
   updateLabel: {
     color: "#fff",
-    fontSize: 17,
+    fontSize: fp(17),
     fontWeight: "600",
   },
 
   updateSubLabel: {
     color: "#666",
-    fontSize: 11,
+    fontSize: fp(11),
     marginBottom: 4,
   },
   resetBtn: {
     marginTop: 12,
     backgroundColor: "#1a1a1a",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: wp(10),
+    paddingHorizontal: wp(16),
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#3a1a1a",
@@ -247,7 +251,7 @@ const styles = StyleSheet.create({
   },
   resetText: {
     color: "#e50914",
-    fontSize: 16,
+    fontSize: fp(16),
     fontFamily: "Bebas",
   },
 });
