@@ -16,10 +16,6 @@
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#7fd4e5"
-      },
       "versionCode": 6,
       "edgeToEdgeEnabled": true,
       "package": "com.alireza0x86.ironbranchplayer"
