@@ -71,9 +71,10 @@ export function FavoriteScreen() {
           onPress: async () => {
             setIsLoading(true);
             try {
-              for (const id of selectedItems) {
-                await removeFavorite(id);
-              }
+              // Remove each selected item from favorites
+
+              await removeFavorite(selectedItems);
+
               setSelectedItems([]);
               setIsSelectionMode(false);
             } finally {

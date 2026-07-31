@@ -16,6 +16,7 @@ import WebView from "react-native-webview";
 
 import { getImageUrl } from "../services/api/tmdb";
 import { addToRecentlyWatched } from "../storage/RecentlyStorage";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TODAY = (() => {
   const d = new Date();
@@ -58,6 +59,7 @@ const INJECTED_JS = `
 
 export default function PlayerScreen() {
   useKeepAwake();
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const {
     id,
@@ -163,7 +165,10 @@ export default function PlayerScreen() {
           keyExtractor={(item) =>
             `${item.id}-${item.episode_number.toString()}`
           }
-          contentContainerStyle={styles.episodeList}
+          contentContainerStyle={[
+            styles.episodeList,
+            { paddingBottom: insets.bottom + 70 },
+          ]}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
             const isUnreleased = item.air_date
@@ -265,7 +270,10 @@ const styles = StyleSheet.create({
     borderColor: "#333",
   },
   sourceBtnActive: { backgroundColor: "#1a73e8", borderColor: "#1a73e8" },
-  episodeList: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 20 },
+  episodeList: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
   episodeCard: {
     flexDirection: "row",
     alignItems: "center",

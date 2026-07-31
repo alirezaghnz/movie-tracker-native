@@ -25,8 +25,13 @@ export function useFavorites() {
   });
 
   const removeMutate = useMutation({
-    mutationFn: async (id) => {
-      const updated = favoritesQuery.data.filter((f) => f.id !== id);
+    mutationFn: async (ids) => {
+      // delete one item for swipe-to-delete, and many item for selected items
+      const idsArray = Array.isArray(ids) ? ids : [ids];
+      // Remove items with the given ids from favorites
+      const updated = favoritesQuery.data.filter(
+        (f) => !idsArray.includes(f.id),
+      );
       await saveFavorites(updated);
       return updated;
     },
