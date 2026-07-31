@@ -14,3 +14,20 @@ export function getTimeAgo(timestamp) {
 
   return new Date(timestamp).toLocaleDateString();
 }
+
+export const getDaysUntil = (date) => {
+  if (!date) return null;
+
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const diff = target - now;
+  const daysUntil = Math.round(diff / (1000 * 60 * 60 * 24));
+
+  if (daysUntil <= 0) return "Releasing today";
+  if (daysUntil === 1) return "1 day left";
+  return `${daysUntil} days left`;
+};

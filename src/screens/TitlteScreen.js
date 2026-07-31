@@ -25,6 +25,7 @@ import {
 import ErrorContainer from "../components/ErrorContainer";
 import { BackButton } from "../components/BackButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getDaysUntil } from "../utils/date";
 
 const TODAY = (() => {
   const d = new Date();
@@ -292,7 +293,12 @@ export default function TitleScreen() {
                     {isUnreleased && (
                       <View style={styles.lockOverlay}>
                         <FontAwesome name="lock" size={28} color="#fff" />
-                        <Text style={styles.lockDate}>{item.air_date}</Text>
+                        <Text style={styles.lockDate}>
+                          {getDaysUntil(item.air_date)}
+                        </Text>
+                        <Text style={styles.lockDateSmall}>
+                          {item.air_date}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -416,7 +422,11 @@ const styles = StyleSheet.create({
   lockDate: {
     color: "#fff",
     fontSize: 12,
-    fontFamily: "IRANSans",
+  },
+  lockDateSmall: {
+    color: "#aaa",
+    fontSize: 9,
+    marginTop: 2,
   },
   metaRow: {
     flexDirection: "row",
