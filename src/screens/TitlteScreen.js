@@ -2,6 +2,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Image,
   Pressable,
   ScrollView,
@@ -17,6 +18,7 @@ import { useFavorites } from "../hooks/useFavorites";
 import { FavoriteStar } from "../components/FavoriteStar";
 
 import {
+  getCollectionMovies,
   getImageUrl,
   getMovieDetails,
   getTVDetails,
@@ -36,7 +38,6 @@ const TODAY = (() => {
 export default function TitleScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  // Extracting imdbID and quality from route params (guard if params is null)
   const { id, type } = route.params ?? {};
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,6 +46,7 @@ export default function TitleScreen() {
   const [seasonData, setSeasonData] = useState(null);
   const [episodeLoading, setEpisodeLoading] = useState(false);
   const [expandedOverview, setExpandedOverview] = useState({});
+  const [collection, setCollection] = useState(null); // {name, part}
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const insets = useSafeAreaInsets();
@@ -71,6 +73,29 @@ export default function TitleScreen() {
     fetchDetails();
   }, [fetchDetails]);
 
+  // Fetch collection movies if the title belongs to a collection( like spider-man :xD)
+  useEffect(() => {
+    const collectionId = details?.belongs_to_collection?.id;
+    if (!collectionId) {
+      setCollection(null);
+      return;
+    }
+    getCollectionMovies(collectionId)
+      .then((data) => {
+        const parts = (data.parts || [])
+          .filter((p) => p.id !== details.id)
+          .sort((a, b) =>
+            (a.release_date || "").localeCompare(b.release_date || ""),
+          );
+        setCollection({
+          name: data.name,
+          parts,
+        });
+      })
+      .catch(console.error);
+  }, [details]);
+
+  // fetch season details
   useEffect(() => {
     if (!id || !season || type !== "tv") return;
     setEpisodeLoading(true);
@@ -89,6 +114,7 @@ export default function TitleScreen() {
     }
   };
 
+  // Generate season options for dropdown
   const seasonOptions =
     details?.seasons?.filter((s) => s.season_number > 0).map((s) => s.name) ??
     [];
@@ -165,7 +191,7 @@ export default function TitleScreen() {
       </View>
       */}
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 55 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.posterContainer}>
@@ -241,20 +267,52 @@ export default function TitleScreen() {
         )}
 
         {type === "movie" && (
-          <Pressable
-            style={styles.movieWatchBtn}
-            onPress={() =>
-              navigation.navigate("Player", {
-                id,
-                type: "movie",
-                poster_path: details?.poster_path,
-                title: details?.title,
-                release_date: details?.release_date,
-              })
-            }
-          >
-            <Text style={styles.watchText}>Watch Movie</Text>
-          </Pressable>
+          <View>
+            <Pressable
+              style={styles.movieWatchBtn}
+              onPress={() =>
+                navigation.navigate("Player", {
+                  id,
+                  type: "movie",
+                  poster_path: details?.poster_path,
+                  title: details?.title,
+                  release_date: details?.release_date,
+                })
+              }
+            >
+              <Text style={styles.watchText}>Watch Movie</Text>
+            </Pressable>
+            {collection && (
+              <View style={{ padding: 12 }}>
+                <Text style={styles.sectionTitle}>{collection.name}</Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={collection.parts}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      style={styles.collectionCard}
+                      onPress={() =>
+                        navigation.push("Title", { id: item.id, type: "movie" })
+                      }
+                    >
+                      <Image
+                        source={{ uri: getImageUrl(item.poster_path) }}
+                        style={styles.collectionPoster}
+                      />
+                      <Text style={styles.collectionTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.collectionYear}>
+                        {item.release_date?.substring(0, 4)}
+                      </Text>
+                    </Pressable>
+                  )}
+                />
+              </View>
+            )}
+          </View>
         )}
 
         {type === "tv" && (
@@ -639,5 +697,31 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     borderRadius: 12,
     alignItems: "center",
+  },
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 22,
+    marginBottom: 12,
+
+    fontFamily: "Bebas",
+  },
+  collectionCard: {
+    width: 110,
+    marginRight: 12,
+  },
+  collectionPoster: {
+    width: "100%",
+    aspectRatio: 2 / 3,
+    borderRadius: 10,
+  },
+  collectionTitle: {
+    color: "#fff",
+    marginTop: 8,
+    fontSize: 13,
+  },
+  collectionYear: {
+    color: "#777",
+    fontSize: 11,
+    marginTop: 1,
   },
 });

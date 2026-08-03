@@ -81,3 +81,7 @@ export const searchAll = (query) => {
 export const getTopRatedTV = () => {
   return fetchTMDB("/tv/top_rated?page=1");
 };
+
+export const getCollectionMovies = (collectionId) => {
+  return fetchTMDB(`/collection/${collectionId}`);
+};
