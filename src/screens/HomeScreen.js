@@ -21,6 +21,12 @@ import {
 } from "../services/api/tmdb";
 import TextTicker from "react-native-text-ticker";
 import TopRatedSlider from "../components/TopRatedSlider";
+import {
+  addRecentSearch,
+  clearRecentSearch,
+  getRecentSearches,
+  removeRecentSearch,
+} from "../storage/recentSearch.storage";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -32,11 +38,14 @@ export default function HomeScreen() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef(null); // for focus on input
 
   const fetchData = () => {
     setError(false);
     setLoading(true);
+    // Fetch trending series, movies, and top-rated TV shows in parallel
     Promise.all([
       getTrending("tv", "day"),
       getTrending("movie", "day"),
@@ -75,6 +84,30 @@ export default function HomeScreen() {
     return () => clearTimeout(timeout);
   }, [query]);
 
+  useEffect(() => {
+    getRecentSearches().then(setRecentSearches);
+  }, []);
+
+  const handleResultPress = async (item) => {
+    await addRecentSearch(query);
+    // Update the list of recent searches after adding the new query
+    setRecentSearches(await getRecentSearches());
+    navigation.navigate("Title", {
+      id: item.id,
+      type: item.media_type,
+    });
+  };
+
+  const handleRemoveRecentSearch = async (q) => {
+    const updated = await removeRecentSearch(q);
+    setRecentSearches(updated);
+  };
+
+  const handleClearRecentSearch = async () => {
+    await clearRecentSearch();
+    setRecentSearches([]);
+  };
+
   const isSearching = query.trim().length > 0;
 
   return (
@@ -101,14 +134,42 @@ export default function HomeScreen() {
             placeholderTextColor="#777"
             value={query}
             onChangeText={setQuery}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             style={styles.input}
           />
+
           {query.length > 0 && (
             <Pressable onPress={() => setQuery("")} style={styles.clearBtn}>
               <Text style={styles.clearText}>×</Text>
             </Pressable>
           )}
         </View>
+        {isFocused && !isSearching && recentSearches.length > 0 && (
+          <View style={styles.recentContainer}>
+            <View style={styles.recetnHeader}>
+              <Text style={styles.recentTitle}>Recent Searches (Max:3)</Text>
+              <Pressable onPress={handleClearRecentSearch}>
+                <Text style={styles.recentClear}>Clear</Text>
+              </Pressable>
+            </View>
+            {recentSearches.map((q) => (
+              <Pressable
+                key={q}
+                style={styles.recentItem}
+                onPress={() => setQuery(q)}
+              >
+                <Text style={styles.recentText}>{q}</Text>
+                <Pressable
+                  onPress={() => handleRemoveRecentSearch(q)}
+                  hitSlop={8}
+                >
+                  <Text style={styles.recentRemove}>×</Text>
+                </Pressable>
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         {searchLoading && (
           <ActivityIndicator style={{ marginBottom: 10 }} color="#fff" />
@@ -119,12 +180,7 @@ export default function HomeScreen() {
             <Pressable
               key={item.id.toString()}
               style={styles.item}
-              onPress={() =>
-                navigation.navigate("Title", {
-                  id: item.id,
-                  type: item.media_type,
-                })
-              }
+              onPress={() => handleResultPress(item)}
             >
               <Image
                 source={{ uri: getImageUrl(item.poster_path) }}
@@ -493,5 +549,42 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: "Bebas",
     textAlign: "center",
+  },
+  recentContainer: {
+    marginBottom: 16,
+  },
+  recetnHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  recentTitle: {
+    color: "#888",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  recentClear: {
+    color: "#e50914",
+    fontSize: 12,
+  },
+  recentItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    gap: 10,
+  },
+  recentIcon: {
+    fontSize: 14,
+  },
+  recentText: {
+    color: "#ccc",
+    fontSize: 14,
+    flex: 1,
+  },
+  recentRemove: {
+    color: "#555",
+    fontSize: 18,
+    paddingHorizontal: 8,
   },
 });
