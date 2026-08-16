@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+
 import { useFavorites } from "../hooks/useFavorites";
 import { useCallback, useRef, useState } from "react";
 import { Swipeable } from "react-native-gesture-handler";
@@ -21,16 +22,33 @@ import SwipeDeleteAction from "../components/SwipeDeleteAction";
 import { getImageUrl } from "../services/api/tmdb";
 import { fp, hp, wp } from "../utils/responsive";
 import ActionModal from "../components/ActionModal";
+import {
+  markFavoritesWithNewEpisodes,
+  markSeriesSeen,
+} from "../utils/checkNewEpisode";
+import NewEpisodeBadgeDot from "../components/NewEpisodeBadgeDot";
+
+import { useNewEpisodesContext } from "../context/NewEpisodesContext";
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 export function FavoriteScreen() {
   const { favorites = [], removeFavorite, clearFavorites } = useFavorites();
+  const { recheck } = useNewEpisodesContext();
+
   const [selectedItems, setSelectedItems] = useState([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [enrichedFavorits, setEnrichedFavorites] = useState([]);
+
   const navigation = useNavigation();
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      markFavoritesWithNewEpisodes(favorites).then(setEnrichedFavorites);
+    }, [favorites]),
+  );
 
   const handleRemoveItem = useCallback(
     async (imdbID) => {
@@ -211,6 +229,13 @@ export function FavoriteScreen() {
                 if (isSelectionMode) {
                   toggleSelectItem(item.id);
                 } else {
+                  // If the item has a new episode and a latest episode ID, mark it as seen
+                  if (item.hasNewEpisode) {
+                    markSeriesSeen(item.id).then(() => {
+                      // Recheck for new episodes after marking as seen
+                      recheck();
+                    });
+                  }
                   navigation.navigate("HomeStack", {
                     screen: "Title",
                     params: {
@@ -248,9 +273,19 @@ export function FavoriteScreen() {
                   }}
                 />
                 <View style={styles.itemHeader}>
-                  <Text style={styles.itemTitle} numberOfLines={2}>
-                    {item.name || item.title}
-                  </Text>
+                  <View style={styles.titleRow}>
+                    <Text
+                      ellipsizeMode="tail"
+                      style={styles.itemTitle}
+                      numberOfLines={1}
+                    >
+                      {item.name || item.title}
+                    </Text>
+                    <Text style={styles.itemType}>
+                      {item.type.toUpperCase()}
+                    </Text>
+                  </View>
+
                   {item.year && (
                     <View style={styles.yearBadge}>
                       <Text style={styles.yearText}>
@@ -258,6 +293,8 @@ export function FavoriteScreen() {
                       </Text>
                     </View>
                   )}
+
+                  {item.hasNewEpisode && <NewEpisodeBadgeDot />}
                 </View>
               </View>
 
@@ -276,6 +313,7 @@ export function FavoriteScreen() {
       toggleSelectItem,
       scrollY,
       renderRightActions,
+      recheck,
     ],
   );
 
@@ -305,7 +343,7 @@ export function FavoriteScreen() {
     <SafeAreaView style={styles.container}>
       <HeaderComponent />
       <AnimatedFlatList
-        data={favorites}
+        data={enrichedFavorits}
         keyExtractor={(item, index) => item?.id ?? String(index)}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
@@ -427,12 +465,25 @@ const styles = StyleSheet.create({
   itemHeader: {
     flex: 1,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   itemTitle: {
     color: "#fff",
     fontSize: fp(16),
     fontWeight: "500",
-    marginBottom: 8,
-    writingDirection: "rtl",
+    flexShrink: 1,
+  },
+  itemType: {
+    color: "#aaa",
+    fontSize: fp(9),
+    backgroundColor: "#222",
+    paddingHorizontal: 3,
+    paddingVertical: 3,
+    borderRadius: 4,
+    flexShrink: 0,
+    marginLeft: 8,
   },
   yearBadge: {
     backgroundColor: "#1a1a1a",
@@ -440,6 +491,7 @@ const styles = StyleSheet.create({
     paddingVertical: wp(4),
     borderRadius: 6,
     alignSelf: "flex-start",
+    marginTop: 5,
   },
   yearText: {
     color: "#c5f31d",

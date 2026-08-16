@@ -21,6 +21,7 @@ import {
 } from "../services/api/tmdb";
 import { errorMessage, validateToken } from "../utils/validateTokenTMDB";
 import MainNavigator from "../navigation";
+import { NewEpisodesProvider } from "../context/NewEpisodesContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,10 +101,12 @@ export default function AppContent() {
     <>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <NavigationContainer key={navKey}>
-            <MainNavigator />
-            <StatusBar style="light" />
-          </NavigationContainer>
+          <NewEpisodesProvider>
+            <NavigationContainer key={navKey}>
+              <MainNavigator />
+              <StatusBar style="light" />
+            </NavigationContainer>
+          </NewEpisodesProvider>
         </GestureHandlerRootView>
       </QueryClientProvider>
 

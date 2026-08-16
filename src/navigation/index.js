@@ -9,6 +9,9 @@ import { MaterialIcons } from "@expo/vector-icons";
 import RecentlyScreen from "../screens/RecentlyScreen";
 import { wp } from "../utils/responsive";
 
+import PulsingFavIcon from "../components/PulsingFavIcon";
+import { useNewEpisodesContext } from "../context/NewEpisodesContext";
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -27,6 +30,7 @@ function HomeStack() {
 }
 
 export default function MainNavigator() {
+  const { hasNew } = useNewEpisodesContext();
   return (
     <Tab.Navigator
       initialRouteName="HomeStack"
@@ -68,7 +72,7 @@ export default function MainNavigator() {
         options={{
           tabBarLabel: "Fav",
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="favorite" size={size} color={color} />
+            <PulsingFavIcon color={color} size={size} hasNew={hasNew} />
           ),
         }}
       />
