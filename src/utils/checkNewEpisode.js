@@ -78,6 +78,7 @@ const checkAndEnrich = async (favorites) => {
           let isNew = false;
           if (isFirstCheck) {
             const lastParsed = parseLocalDate(lastDate);
+            // Check if it aired within the last week
             isNew = !!(lastParsed && lastParsed >= sevenDaysAgo);
           } else {
             // For subsequent checks, detect whether a newer episode has been released.
@@ -91,10 +92,12 @@ const checkAndEnrich = async (favorites) => {
               lastDate !== prevLastDate &&
               lastParsed &&
               lastParsed >= sevenDaysAgo &&
+              //This protects against incorrect data.
               (!prevParsed || lastParsed > prevParsed)
             );
           }
 
+          // detect newly aired episodes without calling the TMDB API again.
           cache[fav.id] = { lastEpDate: lastDate, checkedAt: now, isNew };
 
           return { ...fav, hasNewEpisode: isNew, _latestEpisodeId: lastEp?.id };
