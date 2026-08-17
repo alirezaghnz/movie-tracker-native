@@ -15,7 +15,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
 import { useFavorites } from "../hooks/useFavorites";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Swipeable } from "react-native-gesture-handler";
 import SwipeDeleteAction from "../components/SwipeDeleteAction";
 
@@ -31,6 +31,124 @@ import NewEpisodeBadgeDot from "../components/NewEpisodeBadgeDot";
 import { useNewEpisodesContext } from "../context/NewEpisodesContext";
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
+
+function FavoriteRow({
+  item,
+  index,
+  isSelected,
+  isSelectionMode,
+  scrollY,
+  onPress,
+  onLongPress,
+  renderRightActions,
+}) {
+  const mountAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(mountAnim, {
+      toValue: 1,
+      duration: 320,
+      delay: Math.min(index * 45, 300),
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const inputRange = [-1, 0, index * 90, (index + 2) * 90];
+  const scrollScale = scrollY.interpolate({
+    inputRange,
+    outputRange: [1, 1, 1, 0.92],
+    extrapolate: "clamp",
+  });
+  const scrollOpacity = scrollY.interpolate({
+    inputRange,
+    outputRange: [1, 1, 1, 0.4],
+    extrapolate: "clamp",
+  });
+
+  const translateY = mountAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [18, 0],
+  });
+
+  return (
+    <Animated.View
+      style={{
+        opacity: Animated.multiply(mountAnim, scrollOpacity),
+        transform: [{ translateY }, { scale: scrollScale }],
+      }}
+    >
+      <Swipeable
+        renderRightActions={(progress, dragX) =>
+          !isSelectionMode && renderRightActions(progress, dragX, item.id)
+        }
+        overshootRight={false}
+      >
+        <Pressable
+          style={({ pressed }) => [
+            styles.item,
+            isSelected && styles.selectedItem,
+            pressed && styles.itemPressed,
+          ]}
+          onPress={onPress}
+          onLongPress={onLongPress}
+        >
+          {isSelectionMode && (
+            <View style={styles.checkbox}>
+              <MaterialIcons
+                name={isSelected ? "check-circle" : "radio-button-unchecked"}
+                size={22}
+                color={isSelected ? "#e50914" : "#555"}
+              />
+            </View>
+          )}
+
+          <View style={styles.posterWrapper}>
+            <Image
+              source={{ uri: getImageUrl(item.poster_path) }}
+              style={styles.poster}
+            />
+            <View
+              style={[
+                styles.typeTag,
+                item.type === "movie" ? styles.movieTag : styles.tvTag,
+              ]}
+            >
+              <Text style={styles.typeTagText}>
+                {item.type === "movie" ? "MOVIE" : "TV"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.itemContent}>
+            <Text style={styles.itemTitle} numberOfLines={2}>
+              {item.name || item.title}
+            </Text>
+
+            <View style={styles.metaRow}>
+              {item.year && (
+                <View style={styles.yearBadge}>
+                  <Text style={styles.yearText}>
+                    {item.year.substring(0, 4)}
+                  </Text>
+                </View>
+              )}
+              {item.hasNewEpisode && (
+                <View style={styles.newBadge}>
+                  <NewEpisodeBadgeDot compact />
+                </View>
+              )}
+            </View>
+          </View>
+
+          {!isSelectionMode && (
+            <MaterialIcons name="chevron-right" size={22} color="#444" />
+          )}
+        </Pressable>
+      </Swipeable>
+    </Animated.View>
+  );
+}
+
 export function FavoriteScreen() {
   const { favorites = [], removeFavorite, clearFavorites } = useFavorites();
   const { recheck } = useNewEpisodesContext();
@@ -51,10 +169,10 @@ export function FavoriteScreen() {
   );
 
   const handleRemoveItem = useCallback(
-    async (imdbID) => {
+    async (id) => {
       setIsLoading(true);
       try {
-        await removeFavorite(imdbID);
+        await removeFavorite(id);
       } finally {
         setIsLoading(false);
       }
@@ -66,21 +184,16 @@ export function FavoriteScreen() {
     setShowConfirmClear(true);
   }, []);
 
-  const toggleSelectItem = useCallback(
-    (imdbID) => {
-      if (selectedItems.includes(imdbID)) {
-        setSelectedItems(selectedItems.filter((id) => id !== imdbID));
-      } else {
-        setSelectedItems([...selectedItems, imdbID]);
-      }
-    },
-    [selectedItems],
-  );
+  const toggleSelectItem = useCallback((id) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  }, []);
 
-  const handleDeleteSelected = useCallback(async () => {
+  const handleDeleteSelected = useCallback(() => {
     Alert.alert(
-      "Delete Selected Movies/Series",
-      `Remove ${selectedItems.length} from favorites? `,
+      "Delete selected",
+      `Remove ${selectedItems.length} from favorites?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -89,10 +202,7 @@ export function FavoriteScreen() {
           onPress: async () => {
             setIsLoading(true);
             try {
-              // Remove each selected item from favorites
-
               await removeFavorite(selectedItems);
-
               setSelectedItems([]);
               setIsSelectionMode(false);
             } finally {
@@ -105,29 +215,23 @@ export function FavoriteScreen() {
   }, [selectedItems, removeFavorite]);
 
   const renderRightActions = useCallback(
-    (progress, dragX, imdbID) => {
-      return (
-        <SwipeDeleteAction
-          dragX={dragX}
-          onDelete={() => handleRemoveItem(imdbID)}
-        >
-          Delete
-        </SwipeDeleteAction>
-      );
-    },
+    (progress, dragX, id) => (
+      <SwipeDeleteAction dragX={dragX} onDelete={() => handleRemoveItem(id)}>
+        Delete
+      </SwipeDeleteAction>
+    ),
     [handleRemoveItem],
   );
 
   const HeaderComponent = useCallback(() => {
     const headerTranslate = scrollY.interpolate({
       inputRange: [0, 100],
-      outputRange: [0, -40],
+      outputRange: [0, -30],
       extrapolate: "clamp",
     });
-
     const headerOpacity = scrollY.interpolate({
       inputRange: [0, 100],
-      outputRange: [1, 0.9],
+      outputRange: [1, 0.94],
       extrapolate: "clamp",
     });
 
@@ -141,8 +245,13 @@ export function FavoriteScreen() {
           },
         ]}
       >
-        <View style={styles.headerContent}>
+        <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Favorites</Text>
+          {favorites.length > 0 && (
+            <View style={styles.headerCount}>
+              <Text style={styles.headerCountText}>{favorites.length}</Text>
+            </View>
+          )}
         </View>
 
         {favorites.length > 0 && (
@@ -156,7 +265,7 @@ export function FavoriteScreen() {
                     setIsSelectionMode(false);
                   }}
                 >
-                  <MaterialIcons name="close" size={22} color="#666" />
+                  <MaterialIcons name="close" size={18} color="#888" />
                   <Text style={styles.headerButtonText}>Cancel</Text>
                 </Pressable>
                 {selectedItems.length > 0 && (
@@ -165,9 +274,9 @@ export function FavoriteScreen() {
                     onPress={handleDeleteSelected}
                   >
                     <MaterialIcons
-                      name="delete-sweep"
-                      size={22}
-                      color="#ff4444"
+                      name="delete-outline"
+                      size={18}
+                      color="#ff5555"
                     />
                     <Text
                       style={[styles.headerButtonText, styles.deleteButtonText]}
@@ -183,12 +292,16 @@ export function FavoriteScreen() {
                   style={styles.headerButton}
                   onPress={() => setIsSelectionMode(true)}
                 >
-                  <MaterialIcons name="check-box" size={22} color="#666" />
+                  <MaterialIcons
+                    name="check-circle-outline"
+                    size={18}
+                    color="#888"
+                  />
                   <Text style={styles.headerButtonText}>Select</Text>
                 </Pressable>
                 <Pressable style={styles.headerButton} onPress={handleClearAll}>
-                  <MaterialIcons name="delete-sweep" size={22} color="#666" />
-                  <Text style={styles.headerButtonText}>Clear All</Text>
+                  <MaterialIcons name="delete-outline" size={18} color="#888" />
+                  <Text style={styles.headerButtonText}>Clear all</Text>
                 </Pressable>
               </>
             )}
@@ -207,103 +320,35 @@ export function FavoriteScreen() {
 
   const renderItem = useCallback(
     ({ item, index }) => {
-      const inputRange = [-1, 0, index * 50, (index + 2) * 50];
-      const scale = scrollY.interpolate({
-        inputRange,
-        outputRange: [1, 1, 1, 0],
-      });
-
       const isSelected = selectedItems.includes(item.id);
-
       return (
-        <Animated.View style={{ transform: [{ scale }] }}>
-          <Swipeable
-            renderRightActions={(progress, dragX) =>
-              !isSelectionMode && renderRightActions(progress, dragX, item.id)
+        <FavoriteRow
+          item={item}
+          index={index}
+          isSelected={isSelected}
+          isSelectionMode={isSelectionMode}
+          scrollY={scrollY}
+          renderRightActions={renderRightActions}
+          onPress={() => {
+            if (isSelectionMode) {
+              toggleSelectItem(item.id);
+            } else {
+              if (item.hasNewEpisode) {
+                markSeriesSeen(item.id).then(() => recheck());
+              }
+              navigation.navigate("HomeStack", {
+                screen: "Title",
+                params: { id: item.id, type: item.type },
+              });
             }
-            overshootRight={false}
-          >
-            <Pressable
-              style={[styles.item, isSelected && styles.selectedItem]}
-              onPress={() => {
-                if (isSelectionMode) {
-                  toggleSelectItem(item.id);
-                } else {
-                  // If the item has a new episode and a latest episode ID, mark it as seen
-                  if (item.hasNewEpisode) {
-                    markSeriesSeen(item.id).then(() => {
-                      // Recheck for new episodes after marking as seen
-                      recheck();
-                    });
-                  }
-                  navigation.navigate("HomeStack", {
-                    screen: "Title",
-                    params: {
-                      id: item.id,
-                      type: item.type,
-                    },
-                  });
-                }
-              }}
-              onLongPress={() => {
-                if (!isSelectionMode) {
-                  setIsSelectionMode(true);
-                  toggleSelectItem(item.id);
-                }
-              }}
-            >
-              {isSelectionMode && (
-                <View style={styles.checkbox}>
-                  <MaterialIcons
-                    name={isSelected ? "check-box" : "check-box-outline-blank"}
-                    size={24}
-                    color={isSelected ? "#e50914" : "#666"}
-                  />
-                </View>
-              )}
-
-              <View style={styles.itemContent}>
-                <Image
-                  source={{ uri: getImageUrl(item.poster_path) }}
-                  style={{
-                    width: 50,
-                    height: 70,
-                    borderRadius: 6,
-                    backgroundColor: "#1a1a1a",
-                  }}
-                />
-                <View style={styles.itemHeader}>
-                  <View style={styles.titleRow}>
-                    <Text
-                      ellipsizeMode="tail"
-                      style={styles.itemTitle}
-                      numberOfLines={1}
-                    >
-                      {item.name || item.title}
-                    </Text>
-                    <Text style={styles.itemType}>
-                      {item.type.toUpperCase()}
-                    </Text>
-                  </View>
-
-                  {item.year && (
-                    <View style={styles.yearBadge}>
-                      <Text style={styles.yearText}>
-                        {item.year.substring(0, 4)}
-                      </Text>
-                    </View>
-                  )}
-
-                  {item.hasNewEpisode && <NewEpisodeBadgeDot />}
-                </View>
-              </View>
-
-              {!isSelectionMode && (
-                <MaterialIcons name="chevron-right" size={24} color="#666" />
-              )}
-            </Pressable>
-          </Swipeable>
-        </Animated.View>
+          }}
+          onLongPress={() => {
+            if (!isSelectionMode) {
+              setIsSelectionMode(true);
+              toggleSelectItem(item.id);
+            }
+          }}
+        />
       );
     },
     [
@@ -319,32 +364,35 @@ export function FavoriteScreen() {
 
   if (favorites.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Animated.View style={styles.emptyContent}>
-          <MaterialIcons name="favorite-border" size={80} color="#333" />
-          <Text style={styles.emptyTitle}>No Favorites Yet</Text>
+      <SafeAreaView style={styles.emptyContainer}>
+        <View style={styles.emptyContent}>
+          <View style={styles.emptyIconWrapper}>
+            <MaterialIcons name="favorite-border" size={56} color="#333" />
+          </View>
+          <Text style={styles.emptyTitle}>No favorites yet</Text>
           <Text style={styles.emptySubtitle}>
             Save your favorite movies and TV shows here.
           </Text>
           <Pressable
             style={styles.exploreButton}
-            onPress={() => navigation.navigate("Home")}
+            onPress={() => navigation.navigate("HomeStack")}
           >
             <Text style={styles.exploreButtonText}>
-              Discover Something to Watch
+              Discover something to watch
             </Text>
-            <MaterialIcons name="arrow-right" size={30} color="#fff" />
+            <MaterialIcons name="arrow-forward" size={18} color="#fff" />
           </Pressable>
-        </Animated.View>
-      </View>
+        </View>
+      </SafeAreaView>
     );
   }
+
   return (
     <SafeAreaView style={styles.container}>
       <HeaderComponent />
       <AnimatedFlatList
         data={enrichedFavorits}
-        keyExtractor={(item, index) => item?.id ?? String(index)}
+        keyExtractor={(item, index) => item?.id?.toString() ?? String(index)}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -366,8 +414,8 @@ export function FavoriteScreen() {
           await clearFavorites();
           setShowConfirmClear(false);
         }}
-        title="Delete Favorites"
-        message="Are you sure you want to delete all favorites? "
+        title="Delete favorites"
+        message="Are you sure you want to delete all favorites?"
       />
     </SafeAreaView>
   );
@@ -377,173 +425,229 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    paddingVertical: wp(40),
-    paddingHorizontal: wp(10),
   },
   header: {
-    backgroundColor: "#0a0a0a",
+    paddingHorizontal: wp(20),
+    paddingTop: wp(50),
+    paddingBottom: wp(14),
+    backgroundColor: "#000",
     borderBottomWidth: 1,
-    borderBottomColor: "#1a1a1a",
-    justifyContent: "flex-end",
-    paddingHorizontal: wp(10),
-    paddingBottom: wp(8),
+    borderBottomColor: "#161616",
   },
-  headerContent: {
+  headerTop: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 30,
+    gap: 10,
+    marginBottom: 12,
   },
   headerTitle: {
-    color: "#ffee00",
-    fontSize: fp(38),
+    color: "#fff",
+    fontSize: fp(34),
     fontFamily: "Bebas",
   },
   headerCount: {
-    color: "#999",
-    fontSize: fp(14),
     backgroundColor: "#1a1a1a",
-    paddingHorizontal: wp(12),
-    paddingVertical: wp(6),
+    paddingHorizontal: 10,
+    paddingVertical: 3,
     borderRadius: 20,
-    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#2a2a2a",
+  },
+  headerCountText: {
+    color: "#aaa",
+    fontSize: fp(12),
+    fontWeight: "600",
   },
   headerActions: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
+    gap: 8,
   },
   headerButton: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: wp(8),
-    marginLeft: 8,
+    paddingVertical: 7,
     borderRadius: 8,
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#141414",
+    borderWidth: 1,
+    borderColor: "#242424",
   },
   headerButtonText: {
-    color: "#666",
-    marginLeft: 6,
-    fontSize: fp(14),
+    color: "#999",
+    fontSize: fp(13),
+    fontWeight: "500",
   },
   deleteButton: {
-    backgroundColor: "#2a1a1a",
+    backgroundColor: "#2a1414",
+    borderColor: "#3a1a1a",
   },
   deleteButtonText: {
-    color: "#ff4444",
+    color: "#ff5555",
   },
+
   listContent: {
-    paddingHorizontal: wp(20),
-    paddingTop: wp(10),
-    paddingBottom: wp(20),
+    paddingHorizontal: wp(16),
+    paddingTop: wp(14),
+    paddingBottom: wp(100),
   },
+
   item: {
-    backgroundColor: "#0a0a0a",
-    borderTopLeftRadius: 12,
-    borderBottomStartRadius: 12,
-    marginBottom: 12,
-    padding: 16,
+    backgroundColor: "#0d0d0d",
+    borderRadius: 14,
+    marginBottom: 10,
+    padding: 10,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#1a1a1a",
-  },
-  selectedItem: {
-    backgroundColor: "#1a1a1a",
-    borderColor: "#e50914",
-  },
-  checkbox: {
-    marginRight: 12,
-  },
-  itemContent: {
-    flex: 1,
-    flexDirection: "row-reverse",
-    alignItems: "center",
+    borderColor: "#181818",
     gap: 12,
   },
-  itemHeader: {
-    flex: 1,
+  itemPressed: {
+    backgroundColor: "#131313",
   },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  selectedItem: {
+    backgroundColor: "#1a1010",
+    borderColor: "#e50914",
+  },
+
+  checkbox: {
+    marginRight: 2,
+  },
+
+  posterWrapper: {
+    position: "relative",
+  },
+  poster: {
+    width: wp(64),
+    height: hp(92),
+    borderRadius: 8,
+    backgroundColor: "#1a1a1a",
+  },
+  typeTag: {
+    position: "absolute",
+    top: 5,
+    left: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  tvTag: {
+    backgroundColor: "rgba(59,130,246,0.85)",
+  },
+  movieTag: {
+    backgroundColor: "rgba(229,9,20,0.85)",
+  },
+  typeTagText: {
+    color: "#fff",
+    fontSize: fp(8),
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  dotWrapper: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+  },
+
+  itemContent: {
+    flex: 1,
+    justifyContent: "center",
   },
   itemTitle: {
     color: "#fff",
-    fontSize: fp(16),
-    fontWeight: "500",
-    flexShrink: 1,
+    fontSize: fp(15.5),
+    fontWeight: "600",
+    marginBottom: 8,
+    lineHeight: fp(20),
   },
-  itemType: {
-    color: "#aaa",
-    fontSize: fp(9),
-    backgroundColor: "#222",
-    paddingHorizontal: 3,
-    paddingVertical: 3,
-    borderRadius: 4,
-    flexShrink: 0,
-    marginLeft: 8,
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
   },
   yearBadge: {
     backgroundColor: "#1a1a1a",
-    paddingHorizontal: wp(10),
-    paddingVertical: wp(4),
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 6,
-    alignSelf: "flex-start",
-    marginTop: 5,
   },
   yearText: {
-    color: "#c5f31d",
-    fontSize: fp(12),
+    color: "#8fbf3f",
+    fontSize: fp(11.5),
+    fontWeight: "600",
   },
-  poster: {
-    width: wp(50),
-    height: hp(70),
+  newBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(229,9,20,0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 6,
-    marginLeft: 12,
   },
+  newDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: "#e50914",
+  },
+  newBadgeText: {
+    color: "#e50914",
+    fontSize: fp(11),
+    fontWeight: "600",
+  },
+
   emptyContainer: {
     flex: 1,
     backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
   },
   emptyContent: {
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 40,
+  },
+  emptyIconWrapper: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#0d0d0d",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#1a1a1a",
   },
   emptyTitle: {
     color: "#fff",
-    fontSize: fp(38),
-    fontFamily: "Bebas",
-    marginTop: 20,
-    marginBottom: 10,
+    fontSize: fp(24),
+    fontWeight: "700",
+    marginBottom: 8,
   },
   emptySubtitle: {
     color: "#666",
-    fontFamily: "IRANSans",
-    fontSize: 12,
+    fontSize: fp(13.5),
     textAlign: "center",
-    marginBottom: 30,
-    writingDirection: "rtl",
+    marginBottom: 28,
+    lineHeight: fp(20),
   },
   exploreButton: {
     backgroundColor: "#e50914",
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 13,
+    borderRadius: 12,
   },
   exploreButtonText: {
     color: "#fff",
-    fontSize: 16,
-
-    fontWeight: "bold",
-    marginRight: 8,
-    writingDirection: "rtl",
+    fontSize: fp(14),
+    fontWeight: "700",
   },
+
   loadingOverlay: {
     position: "absolute",
     top: 0,

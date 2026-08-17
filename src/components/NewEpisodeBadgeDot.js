@@ -8,7 +8,7 @@ export default function NewEpisodeBadgeDot() {
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
-          toValue: 1.6,
+          toValue: 1.2,
           duration: 700,
           useNativeDriver: true,
         }),
@@ -26,7 +26,7 @@ export default function NewEpisodeBadgeDot() {
   return (
     <View style={styles.wrapper}>
       <Animated.View style={[styles.dot, { transform: [{ scale: pulse }] }]} />
-      <Text style={styles.text}>New Ep</Text>
+      <Text style={styles.text}>New Episode</Text>
     </View>
   );
 }
@@ -36,7 +36,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    marginTop: 4,
   },
   dot: {
     width: 6,
@@ -48,5 +47,7 @@ const styles = StyleSheet.create({
     color: "#e50914",
     fontSize: 11,
     fontWeight: "600",
+    alignContent: "center",
+    alignItems: "center",
   },
 });
