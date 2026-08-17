@@ -1,19 +1,22 @@
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useAlert } from "../components/Customalert";
 import { checkForUpdate, getCurrentVersion } from "../utils/updateChecker";
 import { useState } from "react";
 import { fp, wp } from "../utils/responsive";
+import UpdateModal from "./UpdateModal";
 
 export function UpdateChecker() {
   const { showAlert } = useAlert();
   const [checking, setChecking] = useState(false);
-  const [lastResult, setLastResult] = useState(null);
+  const [updateInfo, setUpdateInfo] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
   const currentVersion = getCurrentVersion();
+
   const handleCheck = async () => {
     setChecking(true);
     const result = await checkForUpdate();
     setChecking(false);
-    setLastResult(result);
 
     if (result.error) {
       showAlert({
@@ -33,7 +36,7 @@ export function UpdateChecker() {
       return;
     }
 
-    showAlert({
+    /* showAlert({
       title: `Version ${result.latestVersion} Available!`,
       body: "Opening download page...",
       type: "info",
@@ -42,6 +45,10 @@ export function UpdateChecker() {
     if (result.downloadUrl) {
       Linking.openURL(result.downloadUrl);
     }
+      */
+
+    setUpdateInfo(result);
+    setShowModal(true);
   };
 
   return (
@@ -52,15 +59,7 @@ export function UpdateChecker() {
           <Text style={styles.versionText}>v{currentVersion}</Text>
         </View>
       </View>
-      {lastResult && !lastResult.error && (
-        <View style={styles.resultRow}>
-          <Text style={styles.resultText}>
-            {lastResult.hasUpdate
-              ? `Version (v${lastResult.latestVersion}) is available`
-              : "Latest version installed ✓"}
-          </Text>
-        </View>
-      )}
+
       <Pressable
         onPress={handleCheck}
         disabled={checking}
@@ -74,6 +73,16 @@ export function UpdateChecker() {
           {checking ? "Checking..." : "Check for Updates"}
         </Text>
       </Pressable>
+      {updateInfo && (
+        <UpdateModal
+          visible={showModal}
+          onClose={() => setShowModal(false)}
+          currentVersion={updateInfo.currentVersion}
+          latestVersion={updateInfo.latestVersion}
+          releaseNotes={updateInfo.releaseNotes}
+          downloadUrl={updateInfo.downloadUrl}
+        />
+      )}
     </View>
   );
 }
@@ -105,13 +114,6 @@ const styles = StyleSheet.create({
     color: "#aaa",
     fontSize: fp(12),
     fontWeight: "600",
-  },
-  resultRow: {
-    alignItems: "flex-end",
-  },
-  resultText: {
-    color: "#666",
-    fontSize: fp(11),
   },
   button: {
     backgroundColor: "#d42929",
