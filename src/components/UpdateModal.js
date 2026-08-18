@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   header: {
-    padding: wp(20),
+    padding: wp(10),
     alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: "#242424",
@@ -100,13 +100,13 @@ const styles = StyleSheet.create({
     fontSize: fp(13),
   },
   notesContainer: {
-    paddingHorizontal: wp(20),
-    paddingVertical: wp(12),
+    paddingHorizontal: wp(30),
+    paddingVertical: wp(1),
     maxHeight: 300,
   },
   actions: {
     flexDirection: "row",
-    padding: wp(16),
+    padding: wp(14),
     gap: 10,
     borderTopWidth: 1,
     borderTopColor: "#242424",
