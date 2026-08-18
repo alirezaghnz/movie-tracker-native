@@ -208,7 +208,11 @@ export default function HomeScreen() {
                     }}
                   >
                     (
-                    {(item.first_air_date || item.release_date).substring(0, 4)}
+                    {(
+                      item.first_air_date ||
+                      item.release_date ||
+                      "null"
+                    ).substring(0, 4)}
                     ) . IMDB ⭐ {item.vote_average?.toFixed(1)}
                   </Text>
                 </View>

@@ -229,7 +229,7 @@ export default function TitleScreen() {
             <Text style={styles.title}>{details?.name || details?.title}</Text>
             <View style={styles.metaRow}>
               <Text style={styles.year}>
-                {details?.first_air_date || details?.release_date}
+                {details?.first_air_date || details?.release_date || "null"}
               </Text>
               <Text style={styles.detailsRating}>
                 <FontAwesome name="star" size={15} color="yellow" />
