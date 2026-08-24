@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getImageUrl,
   getTopRatedTV,
@@ -27,6 +27,8 @@ import {
   getRecentSearches,
   removeRecentSearch,
 } from "../storage/recentSearch.storage";
+import { getRecentlyWatched } from "../storage/RecentlyStorage";
+import { useRecommendations } from "../hooks/useRecommendations";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -40,6 +42,8 @@ export default function HomeScreen() {
   const [error, setError] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [isFocused, setIsFocused] = useState(false);
+
+  const [recentlyWatched, setRecentlyWatched] = useState([]);
   const inputRef = useRef(null); // for focus on input
 
   const fetchData = () => {
@@ -87,6 +91,14 @@ export default function HomeScreen() {
   useEffect(() => {
     getRecentSearches().then(setRecentSearches);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      getRecentlyWatched().then(setRecentlyWatched);
+    }, []),
+  );
+
+  const recommendedItems = useRecommendations(recentlyWatched);
 
   const handleResultPress = async (item) => {
     await addRecentSearch(query);
@@ -237,6 +249,67 @@ export default function HomeScreen() {
           ) : (
             <>
               <TopRatedSlider data={topRated} />
+
+              {recommendedItems.length > 0 && (
+                <>
+                  <View style={styles.sectionTitleHeader}>
+                    <Text style={styles.sectionTitle}>Recommended For You</Text>
+                    <View style={styles.sectionLine} />
+                  </View>
+
+                  <FlatList
+                    data={recommendedItems}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(item) => `${item.media_type}_${item.id}`}
+                    contentContainerStyle={{ paddingHorizontal: 4, gap: 12 }}
+                    renderItem={({ item }) => (
+                      <Pressable
+                        onPress={() =>
+                          navigation.navigate("Title", {
+                            id: item.id,
+                            type: item.media_type,
+                          })
+                        }
+                        style={styles.card}
+                      >
+                        <View style={styles.posterContainer}>
+                          <Image
+                            source={{ uri: getImageUrl(item.poster_path) }}
+                            style={styles.poster}
+                          />
+                          <View
+                            style={[
+                              styles.typeTag,
+                              item.media_type === "tv"
+                                ? styles.tvTag
+                                : styles.movieTag,
+                            ]}
+                          >
+                            <Text style={styles.typeText}>
+                              {item.media_type === "tv" ? "TV" : "MOVIE"}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <TextTicker
+                          style={styles.cardTitle}
+                          duration={8000}
+                          loop
+                          bounce
+                          repeatSpacer={50}
+                          marqueeDelay={1000}
+                        >
+                          {item.title || item.name}
+                        </TextTicker>
+                        <Text style={styles.rating}>
+                          ⭐ {item.vote_average?.toFixed(1)}
+                        </Text>
+                      </Pressable>
+                    )}
+                  />
+                </>
+              )}
               <View style={styles.sectionTitleHeader}>
                 <Text style={styles.sectionTitle}>Trending Series</Text>
                 <View style={styles.sectionLine} />
@@ -590,5 +663,26 @@ const styles = StyleSheet.create({
     color: "#555",
     fontSize: 18,
     paddingHorizontal: 8,
+  },
+  posterContainer: {
+    position: "relative",
+  },
+  typeTag: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  tvTag: {
+    backgroundColor: "rgba(59,130,246,0.85)",
+  },
+  movieTag: {
+    backgroundColor: "rgba(229,9,20,0.85)",
+  },
+  typeText: {
+    fontSize: 10,
+    fontWeight: "700",
   },
 });
