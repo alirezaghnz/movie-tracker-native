@@ -85,3 +85,19 @@ export const getTopRatedTV = () => {
 export const getCollectionMovies = (collectionId) => {
   return fetchTMDB(`/collection/${collectionId}`);
 };
+
+export const getMovieRecommendations = (id, options = {}) => {
+  return fetchTMDB(`/movie/${id}/recommendations`);
+};
+
+export const getTVRecommendations = (id, options = {}) => {
+  return fetchTMDB(`/tv/${id}/recommendations`);
+};
+
+export const getMovieSimilar = (id, options = {}) => {
+  return fetchTMDB(`/movie/${id}/similar`);
+};
+
+export const getTVSimilar = (id, options = {}) => {
+  return fetchTMDB(`/tv/${id}/similar`);
+};
