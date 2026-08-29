@@ -12,7 +12,7 @@ export const setAuthErrorHandler = (fn) => {
 export const setUnreachableHandler = (fn) => {
   _onUnreachable = fn;
 };
-const fetchTMDB = async (endpoint) => {
+const fetchTMDB = async (endpoint, options = {}) => {
   const token = await secureStorage.get(STORAGE_KEYS.TMDB_TOKEN);
   if (!token) {
     _onAuthError?.();
@@ -28,7 +28,7 @@ const fetchTMDB = async (endpoint) => {
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       headers,
-      signal: controller.signal,
+      signal: options.singal ?? controller.signal,
     });
     clearTimeout(timeoutId);
 
@@ -41,7 +41,7 @@ const fetchTMDB = async (endpoint) => {
     }
 
     return res.json();
-  } catch {
+  } catch (err) {
     _onUnreachable?.();
     throw new Error("TMDB unreachable");
   }
@@ -87,17 +87,35 @@ export const getCollectionMovies = (collectionId) => {
 };
 
 export const getMovieRecommendations = (id, options = {}) => {
-  return fetchTMDB(`/movie/${id}/recommendations`);
+  return fetchTMDB(`/movie/${id}/recommendations`, options);
 };
 
 export const getTVRecommendations = (id, options = {}) => {
-  return fetchTMDB(`/tv/${id}/recommendations`);
+  return fetchTMDB(`/tv/${id}/recommendations`, options);
 };
 
 export const getMovieSimilar = (id, options = {}) => {
-  return fetchTMDB(`/movie/${id}/similar`);
+  return fetchTMDB(`/movie/${id}/similar`, options);
 };
 
 export const getTVSimilar = (id, options = {}) => {
-  return fetchTMDB(`/tv/${id}/similar`);
+  return fetchTMDB(`/tv/${id}/similar`, options);
+};
+
+export const discoverMovies = (params = {}, page = 1, options = {}) => {
+  const query = new URLSearchParams({
+    sort_by: "popularity.desc",
+    page: page.toString(),
+    ...params,
+  }).toString();
+  return fetchTMDB(`/discover/movie?${query}`, options);
+};
+
+export const discoverTV = (params = {}, page = 1, options = {}) => {
+  const query = new URLSearchParams({
+    sort_by: "popularity.desc",
+    page: page.toString(),
+    ...params,
+  }).toString();
+  return fetchTMDB(`/discover/tv?${query}`, options);
 };

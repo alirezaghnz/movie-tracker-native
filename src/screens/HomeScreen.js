@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
+import Feather from "@expo/vector-icons/Feather";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -29,6 +30,10 @@ import {
 } from "../storage/recentSearch.storage";
 import { getRecentlyWatched } from "../storage/RecentlyStorage";
 import { useRecommendations } from "../hooks/useRecommendations";
+import FilterModal from "../components/FilterModal";
+import { useFilters } from "../hooks/useFilters";
+import { useDiscoverResults } from "../hooks/useDiscoverResults";
+import { getGenreName } from "../constants/genres";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -42,6 +47,17 @@ export default function HomeScreen() {
   const [error, setError] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [isFocused, setIsFocused] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const {
+    filters,
+    selectMediaType,
+    toggleGenre,
+    toggleYear,
+    resetFilters,
+    hasActiveFilters,
+  } = useFilters();
+  const { results: discoverResults, loading: discoverLoading } =
+    useDiscoverResults(filters);
 
   const [recentlyWatched, setRecentlyWatched] = useState([]);
   const inputRef = useRef(null); // for focus on input
@@ -139,23 +155,40 @@ export default function HomeScreen() {
             <Text style={styles.profileIcon}>👤</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.searchRow}>
-          <TextInput
-            ref={inputRef}
-            placeholder="Search movies and series..."
-            placeholderTextColor="#777"
-            value={query}
-            onChangeText={setQuery}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            style={styles.input}
-          />
+        <View style={styles.headerRow}>
+          <View style={styles.searchRow}>
+            <TextInput
+              ref={inputRef}
+              placeholder="Search movies and series..."
+              placeholderTextColor="#777"
+              value={query}
+              onChangeText={setQuery}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              style={styles.input}
+            />
 
-          {query.length > 0 && (
-            <Pressable onPress={() => setQuery("")} style={styles.clearBtn}>
-              <Text style={styles.clearText}>×</Text>
-            </Pressable>
-          )}
+            {query.length > 0 && (
+              <Pressable onPress={() => setQuery("")} style={styles.clearBtn}>
+                <Text style={styles.clearText}>×</Text>
+              </Pressable>
+            )}
+          </View>
+          <Pressable
+            onPress={() => setShowFilters(true)}
+            style={styles.filterBtn}
+          >
+            <Feather name="settings" size={20} color="white" />
+          </Pressable>
+          <FilterModal
+            visible={showFilters}
+            onClose={() => setShowFilters(false)}
+            filters={filters}
+            setType={selectMediaType}
+            toggleGenre={toggleGenre}
+            setYear={toggleYear}
+            resetFitlers={resetFilters}
+          />
         </View>
         {isFocused && !isSearching && recentSearches.length > 0 && (
           <View style={styles.recentContainer}>
@@ -232,7 +265,83 @@ export default function HomeScreen() {
             </Pressable>
           ))}
 
-        {!isSearching &&
+        {hasActiveFilters ? (
+          <View style={styles.filteredSection}>
+            <View style={styles.filteredHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.filteredTitle}>
+                  {discoverResults.length} Result
+                  {discoverResults.length !== 1 ? "s" : ""}
+                </Text>
+                <Text style={styles.filteredSubtitle}>
+                  {filters.mediaType !== "all" &&
+                    (filters.mediaType === "movie" ? "Movies" : "Series")}
+                  {filters.selectedGenreId &&
+                    ` · ${getGenreName(filters.selectedGenreId, filters.mediaType)}`}
+                  {filters.selectedYear && ` · ${filters.selectedYear}`}
+                </Text>
+              </View>
+
+              <Pressable style={styles.exitFilterBtn} onPress={resetFilters}>
+                <Feather name="x" size={16} color="#fff" />
+                <Text style={styles.exitFilterText}>Clear</Text>
+              </Pressable>
+            </View>
+
+            {discoverLoading ? (
+              <ActivityIndicator style={{ marginTop: 40 }} color="#fff" />
+            ) : discoverResults.length === 0 ? (
+              <View style={styles.emptyFilterState}>
+                <Text style={styles.emptyFilterIcon}>🔍</Text>
+                <Text style={styles.emptyFilterText}>No results found</Text>
+                <Text style={styles.emptyFilterSubtext}>
+                  Try different filters
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.grid}>
+                {discoverResults.map((item) => (
+                  <Pressable
+                    key={`${item.media_type}_${item.id}`}
+                    style={styles.filterCard}
+                    onPress={() =>
+                      navigation.navigate("Title", {
+                        id: item.id,
+                        type: item.media_type,
+                      })
+                    }
+                  >
+                    <View style={styles.filterPosterWrapper}>
+                      <Image
+                        source={{ uri: getImageUrl(item.poster_path) }}
+                        style={styles.filterPoster}
+                      />
+                      <View
+                        style={[
+                          styles.typeTag,
+                          item.media_type === "tv"
+                            ? styles.tvTag
+                            : styles.movieTag,
+                        ]}
+                      >
+                        <Text style={styles.typeText}>
+                          {item.media_type === "tv" ? "TV" : "MOVIE"}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.filterCardTitle} numberOfLines={2}>
+                      {item.title || item.name}
+                    </Text>
+                    <Text style={styles.filterCardRating}>
+                      ⭐ {item.vote_average?.toFixed(1)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        ) : (
+          !isSearching &&
           (error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorIcon}>📡</Text>
@@ -324,7 +433,10 @@ export default function HomeScreen() {
                 renderItem={({ item }) => (
                   <Pressable
                     onPress={() =>
-                      navigation.navigate("Title", { id: item.id, type: "tv" })
+                      navigation.navigate("Title", {
+                        id: item.id,
+                        type: "tv",
+                      })
                     }
                     style={styles.card}
                   >
@@ -408,7 +520,8 @@ export default function HomeScreen() {
                 }}
               />
             </>
-          ))}
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -506,8 +619,37 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    width: 140,
+    width: "140",
     marginBottom: 20,
+  },
+  filterCard: {
+    width: "48%",
+    marginBottom: 20,
+  },
+  filterPosterWrapper: {
+    position: "relative",
+  },
+  filterPoster: {
+    width: "100%",
+    aspectRatio: 2 / 3,
+    borderRadius: 10,
+    backgroundColor: "#1a1a1a",
+  },
+  filterCardTitle: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 8,
+  },
+  filterCardRating: {
+    color: "#888",
+    fontSize: 11,
+    marginTop: 2,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   poster: {
     width: 140,
@@ -525,44 +667,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  footer: {
-    paddingTop: 5,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#222",
-    alignItems: "center",
-  },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
 
-  footerText: {
-    color: "#888",
-    fontSize: 13,
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 2,
-  },
-
-  githubBtn: {
-    backgroundColor: "#111",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-
-  githubText: {
-    color: "#fff",
-    fontSize: 13,
-  },
   searchRow: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#111",
-    borderRadius: 30,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: "#222",
-    marginBottom: 16,
+    marginBottom: 3,
     paddingRight: 8,
+  },
+  filterBtn: {
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
   clearBtn: {
     width: 22,
@@ -684,5 +806,59 @@ const styles = StyleSheet.create({
   typeText: {
     fontSize: 10,
     fontWeight: "700",
+  },
+  filteredSection: {
+    marginTop: 8,
+  },
+  filteredHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1a1a1a",
+  },
+  filteredTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: "Bebas",
+  },
+  filteredSubtitle: {
+    color: "#888",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  exitFilterBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#e50914",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  exitFilterText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyFilterState: {
+    alignItems: "center",
+    paddingTop: 60,
+    gap: 8,
+  },
+  emptyFilterIcon: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  emptyFilterText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  emptyFilterSubtext: {
+    color: "#666",
+    fontSize: 13,
   },
 });
