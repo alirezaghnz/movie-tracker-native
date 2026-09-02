@@ -20,7 +20,9 @@ import { FavoriteStar } from "../components/FavoriteStar";
 import {
   getCollectionMovies,
   getImageUrl,
+  getMovieCredits,
   getMovieDetails,
+  getTVCredits,
   getTVDetails,
   getTVSeasonsDetails,
 } from "../services/api/tmdb";
@@ -28,6 +30,7 @@ import ErrorContainer from "../components/ErrorContainer";
 import { BackButton } from "../components/BackButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getDaysUntil } from "../utils/date";
+import CastSection from "../components/CastSection";
 
 const TODAY = (() => {
   const d = new Date();
@@ -47,6 +50,7 @@ export default function TitleScreen() {
   const [episodeLoading, setEpisodeLoading] = useState(false);
   const [expandedOverview, setExpandedOverview] = useState({});
   const [collection, setCollection] = useState(null); // {name, part}
+  const [cast, setCast] = useState([]);
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const insets = useSafeAreaInsets();
@@ -103,6 +107,13 @@ export default function TitleScreen() {
       .then(setSeasonData)
       .finally(() => setEpisodeLoading(false));
   }, [id, season, type]);
+
+  useEffect(() => {
+    const fetchCredits = type === "movie" ? getMovieCredits : getTVCredits;
+    fetchCredits(id)
+      .then((data) => setCast(data.cast ?? []))
+      .catch(() => setCast([]));
+  }, [id, type]);
 
   const handleSeasonChange = (name) => {
     if (!details?.seasons) return;
@@ -265,6 +276,8 @@ export default function TitleScreen() {
         {!!details?.overview && (
           <Text style={styles.plot}>{details?.overview}</Text>
         )}
+
+        <CastSection cast={cast} />
 
         {type === "movie" && (
           <View>

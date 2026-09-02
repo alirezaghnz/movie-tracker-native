@@ -119,3 +119,11 @@ export const discoverTV = (params = {}, page = 1, options = {}) => {
   }).toString();
   return fetchTMDB(`/discover/tv?${query}`, options);
 };
+
+export const getMovieCredits = (id) => {
+  return fetchTMDB(`/movie/${id}/credits`);
+};
+
+export const getTVCredits = (id) => {
+  return fetchTMDB(`/tv/${id}/credits`);
+};
