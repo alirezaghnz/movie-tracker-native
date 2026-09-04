@@ -2,7 +2,7 @@
   "expo": {
     "name": "IronBranch",
     "slug": "ironbranch-player",
-    "version": "1.3.1",
+    "version": "1.4.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,7 +16,7 @@
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 7,
+      "versionCode": 8,
       "edgeToEdgeEnabled": true,
       "package": "com.alireza0x86.ironbranchplayer"
     },
