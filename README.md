@@ -28,7 +28,7 @@ Series metadata (posters, descriptions, ratings, episodes) is fetched from [TMDB
 ## Requirements
 
 - An Android device (Android 8.0+)
-- A free TMDB Read Access Token → [Get one here](https://www.themoviedb.org/settings/api)
+- A free TMDB Read Access Token → ([Guide on how to get one](tmdb.md))
 
 ---
 
