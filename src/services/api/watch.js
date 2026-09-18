@@ -1,24 +1,9 @@
 // Documentation:
-// https://www.videasy.net/docs
+
 // https://vsembed.su/api/
 // https://www.vidking.net/#documentation
 
 export const PLAYER_SOURCES = [
-  {
-    id: "videasy",
-    name: "Videasy",
-    tag: null,
-    note: null,
-    supportsProgress: true,
-    colorParam: "color",
-    langParam: null,
-    params: {
-      overlay: "true",
-    },
-    seriesUrl: (id, season, ep) =>
-      `https://player.videasy.net/tv/${id}/${season}/${ep}`,
-    movieUrl: (id) => `https://player.videasy.net/movie/${id}`,
-  },
   {
     id: "vidsrc",
     name: "Vidsrc",
@@ -31,6 +16,21 @@ export const PLAYER_SOURCES = [
     seriesUrl: (id, season, ep) =>
       `https://vsembed.su/embed/tv/${id}/${season}/${ep}`,
     movieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
+  },
+  {
+    id: "vidking",
+    label: "Vidking",
+    tag: null,
+    note: null,
+    supportsProgress: true,
+    colorParam: "color",
+    langParam: null,
+    params: {
+      autoPlay: true,
+    },
+    seriesUrl: (id, season, ep) =>
+      `https://www.vidking.net/embed/tv/${id}/${season}/${ep}`,
+    movieUrl: (id) => `https://www.vidking.net/embed/movie/${id}`,
   },
 ];
 
