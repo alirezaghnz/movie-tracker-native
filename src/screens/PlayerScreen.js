@@ -26,9 +26,45 @@ const TODAY = (() => {
 
 const AD_BLOCKS = [
   "googlesyndication.com",
+  "googleadservices.com",
   "doubleclick.net",
+  "google-analytics.com",
+  "googletagmanager.com",
+  "googletagservices.com",
   "popads.net",
+  "popcash.net",
+  "poptm.com",
+  "propellerads.com",
+  "propellerclick.com",
+  "adsterra.com",
+  "adskeeper.co.uk",
   "exoclick.com",
+  "exosrv.com",
+  "juicyads.com",
+  "trafficjunky.net",
+  "trafficfactory.biz",
+  "adnium.com",
+  "revcontent.com",
+  "mgid.com",
+  "taboola.com",
+  "outbrain.com",
+  "clickadu.com",
+  "adcash.com",
+  "bidvertiser.com",
+  "hilltopads.net",
+  "adsterratech.com",
+  "onclickmax.com",
+  "popmyads.com",
+  "yllix.com",
+  "facebook.net",
+  "connect.facebook.net",
+  "hotjar.com",
+  "mixpanel.com",
+  "segment.com",
+  "scorecardresearch.com",
+  "coinhive.com",
+  "jsecoin.com",
+  "cryptoloot.pro",
 ];
 const INJECTED_JS = `
   window.open = () => null;
@@ -37,23 +73,6 @@ const INJECTED_JS = `
     document.querySelectorAll('iframe:not([src*="embed"]), div[class*="popup"]')
       .forEach(el => el.remove());
   }, 1000);
-
-  // when the action play, call the react native 
-  const detectPlay = () => {
-    const videos = document.querySelectorAll('video');
-    videos.forEach(video => {
-      if (!video._watchTracked) {
-        video._watchTracked = true;
-        video.addEventListener('play', () => {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIDEO_PLAYING' }));
-        });
-      }
-    });
-  };
-
-  
-  setInterval(detectPlay, 2000);
-
   true;
 `;
 
@@ -77,45 +96,33 @@ export default function PlayerScreen() {
   const [hasTracked, setHasTracked] = useState(false);
 
   const url = getSourceUrl(sourceId, type, id, season, currentEp);
-  const handleEpisodePress = async (episode) => {
-    setHasTracked(false); // need to reset for new ep
-    setCurrentEp(episode.episode_number);
-  };
 
   useEffect(() => {
-    if (type !== "movie") return;
+    if (hasTracked) return;
 
-    addToRecentlyWatched({
-      id,
-      type,
-      title,
-      poster_path,
-      release_date,
-      visitedAt: Date.now(),
-    });
-  }, []);
+    const timer = setTimeout(async () => {
+      const currentEpisode = episodes.find(
+        (e) => e.episode_number === currentEp,
+      );
+      await addToRecentlyWatched({
+        id,
+        type,
+        season,
+        episode_number: currentEp,
+        episode_name: currentEpisode?.name ?? "",
+        title,
+        poster_path,
+        release_date,
+        first_air_date,
+        visitedAt: Date.now(),
+      });
+      setHasTracked(true);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [currentEp, sourceId, hasTracked]);
 
-  const handleWebViewMessage = async (event) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === "VIDEO_PLAYING" && !hasTracked) {
-        setHasTracked(true);
-        const currentEpisode = episodes.find(
-          (e) => e.episode_number === currentEp,
-        );
-        await addToRecentlyWatched({
-          id,
-          type,
-          season,
-          episode_number: currentEp,
-          episode_name: currentEpisode?.name ?? "",
-          title,
-          poster_path,
-          first_air_date,
-          visitedAt: Date.now(),
-        });
-      }
-    } catch {}
+  const handleEpisodePress = (episode) => {
+    setCurrentEp(episode.episode_number);
   };
 
   return (
@@ -130,7 +137,6 @@ export default function PlayerScreen() {
           allowsFullscreenVideo
           mediaPlaybackRequiresUserAction={false}
           style={{ flex: 1 }}
-          onMessage={handleWebViewMessage}
         />
       </View>
       <View style={styles.sourceBar}>
