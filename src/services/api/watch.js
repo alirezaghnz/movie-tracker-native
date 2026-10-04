@@ -1,7 +1,7 @@
 // Documentation:
 
 // https://vsembed.su/api/
-// https://www.vidking.net/#documentation
+
 
 export const PLAYER_SOURCES = [
   {
@@ -16,21 +16,6 @@ export const PLAYER_SOURCES = [
     seriesUrl: (id, season, ep) =>
       `https://vsembed.su/embed/tv/${id}/${season}/${ep}`,
     movieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
-  },
-  {
-    id: "vidking",
-    label: "Vidking",
-    tag: null,
-    note: null,
-    supportsProgress: true,
-    colorParam: "color",
-    langParam: null,
-    params: {
-      autoPlay: true,
-    },
-    seriesUrl: (id, season, ep) =>
-      `https://www.vidking.net/embed/tv/${id}/${season}/${ep}`,
-    movieUrl: (id) => `https://www.vidking.net/embed/movie/${id}`,
   },
 ];
 
