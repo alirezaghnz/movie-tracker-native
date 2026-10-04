@@ -20,12 +20,15 @@
       "edgeToEdgeEnabled": true,
       "package": "com.alireza0x86.ironbranchplayer"
     },
-
     "extra": {
       "eas": {
         "projectId": "a90f4a94-8e4d-4456-a1f3-b33ffaface4f"
       }
     },
-    "plugins": ["expo-secure-store", "expo-font"]
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      "expo-status-bar"
+    ]
   }
 }
