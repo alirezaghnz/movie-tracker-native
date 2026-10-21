@@ -17,6 +17,7 @@ import WebView from "react-native-webview";
 import { getImageUrl } from "../services/api/tmdb";
 import { addToRecentlyWatched } from "../storage/RecentlyStorage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import DropdownSelect from "../components/DropdownSelect";
 
 const TODAY = (() => {
   const d = new Date();
@@ -25,46 +26,73 @@ const TODAY = (() => {
 })();
 
 const AD_BLOCKS = [
-  "googlesyndication.com",
-  "googleadservices.com",
-  "doubleclick.net",
-  "google-analytics.com",
-  "googletagmanager.com",
-  "googletagservices.com",
-  "popads.net",
-  "popcash.net",
-  "poptm.com",
-  "propellerads.com",
-  "propellerclick.com",
-  "adsterra.com",
-  "adskeeper.co.uk",
-  "exoclick.com",
-  "exosrv.com",
-  "juicyads.com",
-  "trafficjunky.net",
-  "trafficfactory.biz",
-  "adnium.com",
-  "revcontent.com",
-  "mgid.com",
-  "taboola.com",
-  "outbrain.com",
-  "clickadu.com",
-  "adcash.com",
-  "bidvertiser.com",
-  "hilltopads.net",
-  "adsterratech.com",
-  "onclickmax.com",
-  "popmyads.com",
-  "yllix.com",
-  "facebook.net",
-  "connect.facebook.net",
-  "hotjar.com",
-  "mixpanel.com",
-  "segment.com",
-  "scorecardresearch.com",
-  "coinhive.com",
-  "jsecoin.com",
-  "cryptoloot.pro",
+  "*://www.google-analytics.com/*",
+  "*://analytics.google.com/*",
+  "*://googletagmanager.com/*",
+  "*://www.googletagmanager.com/*",
+  "*://googletagservices.com/*",
+  "*://doubleclick.net/*",
+  "*://*.doubleclick.net/*",
+  "*://adservice.google.com/*",
+  "*://adservice.google.de/*",
+  "*://pagead2.googlesyndication.com/*",
+  "*://stats.g.doubleclick.net/*",
+  "*://yt3.ggpht.com/ytc/*",
+  "*://fonts.googleapis.com/*",
+  "*://fonts.gstatic.com/*",
+  "*://googleapis.com/*",
+  "*://gstatic.com/*",
+  "*://cdn.adx1.com/*",
+  "*://intelligenceadx.com/*",
+  "*://adsco.re/*",
+  "*://mc.yandex.com/*",
+  "*://mc.yandex.ru/*",
+  "*://bvtpk.com/*",
+  "*://my.rtmark.net/*",
+  "*://bvtpk.com/*",
+  "*://b7510.com/*",
+  "*://gt.unbrownunflat.com/*",
+  "*://im.malocacomals.com/*",
+  "*://users.videasy.net/*",
+  "*://nf.sixmossin.com/*",
+  "*://realizationnewestfangs.com/*",
+  "*://acscdn.com/*",
+  "*://lt.taloseempest.com/*",
+  "*://pl26708123.profitableratecpm.com/*",
+  "*://preferencenail.com/*",
+  "*://protrafficinspector.com/*",
+  "*://s10.histats.com/*",
+  "*://weirdopt.com/*",
+  "*://*.cloudflareinsights.com/*",
+  "*://cloudflareinsights.com/*",
+  "*://kettledroopingcontinuation.com/*",
+  "*://wayfarerorthodox.com/*",
+  "*://woxaglasuy.net/*",
+
+  "*://rzjzjnavztycv.online/*",
+  "*://tmstr4.cloudnestra.com/*",
+  "*://tmstr4.neonhorizonworkshops.com/*",
+  "*://hameltnoummos.com/*",
+  "*://ancillammmm.com/*",
+  "*://*.ancillammmm.com/*",
+  "*://hubeamily.com/*",
+  "*://*.hubeamily.com/*",
+  "*://llvpn.com/*",
+  "*://americanacademyofthermology.org/*",
+  "*://d2pf0ys5xus6n.cloudfront.net/*",
+  "*://gillyspencie.com/*",
+  "*://soakysecrets.com/*",
+  "*://*.soakysecrets.com/*",
+  "*://mdstats.info/*",
+  "*://ads-twitter.com/*",
+  "*://*.ads-twitter.com/*",
+  "*://connatix.com/*",
+  "*://*.connatix.com/*",
+  "*://imasdk.googleapis.com/*",
+  "*://jwpltx.com/*",
+  "*://*.jwpltx.com/*",
+  "*://datariaarpent.com/*",
+  "*://*.datariaarpent.com/*",
 ];
 const INJECTED_JS = `
   window.open = () => null;
@@ -91,11 +119,20 @@ export default function PlayerScreen() {
     first_air_date,
     release_date,
   } = route.params || {};
-  const [sourceId, setSourceId] = useState("videasy");
+  const [sourceId, setSourceId] = useState(PLAYER_SOURCES[0].id);
   const [currentEp, setCurrentEp] = useState(ep);
   const [hasTracked, setHasTracked] = useState(false);
 
   const url = getSourceUrl(sourceId, type, id, season, currentEp);
+
+  const sourceNames = PLAYER_SOURCES.map((src) => src.name);
+  const currentSourceName =
+    PLAYER_SOURCES.find((src) => src.id === sourceId)?.name ?? "";
+
+  const handleSourceChange = (name) => {
+    const found = PLAYER_SOURCES.find((src) => src.name === name);
+    if (found) setSourceId(found.id);
+  };
 
   useEffect(() => {
     if (hasTracked) return;
@@ -137,32 +174,17 @@ export default function PlayerScreen() {
           allowsFullscreenVideo
           mediaPlaybackRequiresUserAction={false}
           style={{ flex: 1 }}
+          userAgen="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         />
       </View>
       <View style={styles.sourceBar}>
-        <Text style={styles.sourceLabel}>Sources:</Text>
-        <View style={styles.sourceBtns}>
-          {PLAYER_SOURCES.map((src) => (
-            <Pressable
-              key={src.id}
-              onPress={() => setSourceId(src.id)}
-              style={[
-                styles.sourceBtn,
-                sourceId === src.id && styles.sourceBtnActive,
-              ]}
-            >
-              <Text
-                style={{
-                  color: sourceId === src.id ? "#fff" : "#aaa",
-                  fontSize: 13,
-                  fontWeight: sourceId === src.id ? "700" : "400",
-                }}
-              >
-                {src.name}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <DropdownSelect
+          label="Sources"
+          value={currentSourceName}
+          options={sourceNames}
+          onChange={handleSourceChange}
+          width={120}
+        />
       </View>
       {episodes.length > 0 && (
         <FlatList
