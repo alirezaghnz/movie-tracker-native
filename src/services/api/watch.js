@@ -2,7 +2,6 @@
 
 // https://vsembed.su/api/
 
-
 export const PLAYER_SOURCES = [
   {
     id: "vidsrc",
@@ -12,10 +11,77 @@ export const PLAYER_SOURCES = [
     supportsProgress: true,
     colorParam: "color",
     langParam: "ds_lang",
-    params: {},
+    params: {
+      autoplay: "1",
+    },
     seriesUrl: (id, season, ep) =>
       `https://vsembed.su/embed/tv/${id}/${season}/${ep}`,
     movieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
+  },
+  {
+    id: "peachify",
+    name: "Peachify",
+    tag: null,
+    note: "Movies only",
+    supportsProgress: true,
+    colorParam: "accent", // hex without # → e.g. "e50914"
+    langParam: "sub",
+    params: {
+      autoPlay: "true",
+      pip: "hide",
+      cast: "hide",
+    },
+    seriesUrl: (id, season, ep) =>
+      `https://peachify.top/embed/tv/${id}/${season}/${ep}`,
+    movieUrl: (id) => `https://peachify.top/embed/movie/${id}`,
+  },
+  {
+    id: "vidrift",
+    name: "Vidrift",
+    tag: null,
+    note: "Multi Lang",
+    supportsProgress: true,
+    colorParam: "brandColor",
+    langParam: "sub",
+    params: {
+      title: "true",
+      hide: "next,episodes,cast",
+    },
+    seriesUrl: (id, season, ep) =>
+      `https://embed.vidrift.net/embed/tv/${id}/${season}/${ep}`,
+    movieUrl: (id) => `https://embed.vidrift.net/embed/movie/${id}`,
+  },
+  {
+    id: "aether",
+    name: "Aether",
+    tag: null,
+    note: "Multi Lang", // Has multiple audio languages
+    supportsProgress: true,
+    colorParam: null,
+    langParam: null,
+    params: {},
+    seriesUrl: (id, season, ep) =>
+      `https://aether.ist/media/tmdb-tv-${id}/${season}/${ep}`,
+    movieUrl: (id) => `https://aether.ist/media/tmdb-movie-${id}`,
+  },
+  {
+    id: "vidlove",
+    name: "Vidlove",
+    tag: null,
+    note: null,
+    supportsProgress: true,
+    colorParam: "primarycolor", // hex without # → e.g. "e50914"
+    params: {
+      autoplay: "true",
+      autonext: "false",
+      tour: "true",
+      showNextEpisode: "false",
+      hideautonext: "true",
+      hidenextbutton: "true",
+    },
+    seriesUrl: (id, season, ep) =>
+      `https://player.vidlove.cc/embed/tv/${id}/${season}/${ep}`,
+    movieUrl: (id) => `https://player.vidlove.cc/embed/movie/${id}`,
   },
 ];
 
@@ -52,36 +118,3 @@ export const getSourceUrl = (
 
   return url.toString();
 };
-
-/*
-export async function getWatchData(imdbID, season, quality) {
-  const res = await fetch(
-    `http://192.168.1.108:3000/api/watch/${imdbID}?season=${season}&quality=${quality}`,
-  );
-  //console.log('get watch status:', res.status);
-
-  
-  //const raw = await res.clone().text();
-  //let parsed;
-  //try {
-  //  parsed = raw ? JSON.parse(raw) : null;
-  //} catch (e) {
-  //  parsed = raw;
-  //}
-  
-  if (!res.ok) {
-    
-    //console.log("get watch error body", parsed);
-    //const msg =
-    //  parsed && typeof parsed === "object"
-    //    ? parsed.message || parsed.error || JSON.stringify(parsed)
-    //    : String(parsed);
-    //throw new Error(`Watch API ${res.status} - ${msg}`);
-    
-    throw new Error("Network response was not OK:" + res.status);
-  }
-
-  //  console.log("get watch body", parsed);
-  return res.json();
-}
-*/
