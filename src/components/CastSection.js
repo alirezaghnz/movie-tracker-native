@@ -4,22 +4,13 @@ import {
   FlatList,
   Image,
   LayoutAnimation,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
-  UIManager,
   View,
 } from "react-native";
 import { getImageUrl } from "../services/api/tmdb";
 import { fp, wp } from "../utils/responsive";
-
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export default function CastSection({ cast = [] }) {
   const [expanded, setExpanded] = useState(false);
