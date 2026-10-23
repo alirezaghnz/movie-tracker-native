@@ -10,21 +10,34 @@ A free & open-source Android app to stream any TV series in the world. Zero ads,
 
 ## Why IronBranch?
 
-- 🎦 **Streaming** — Watch any TV series from around the world, directly on your Android device
-- 🔍 **Discovery** — Browse trending and top-rated series powered by TMDB
-- ❤️ **Favorites** — Save and manage your favorite
+- 🎦 **Streaming** — Watch movies and TV series from around the world on your Android device
+- 🔍 **Discovery** — Trending, top-rated, and personalized recommendations powered by TMDB
+- 🎛️ **Filters** — Browse by type, genre, and release year
+- 🎭 **Cast & Crew** — See actors, directors, and writers for every title
+- ❤️ **Favorites** — Save titles and get a subtle hint when a new episode drops
+- 🕘 **Library** — Pick up where you left off with your watch history
 - 🔒 **Privacy** — Your TMDB token is stored securely on your device. No servers, no accounts, no tracking
 - 📦 **No Play Store** — Install directly via APK. No Google account needed
 
-![HomeScreen](screenshots/Home.jpg)
-![Fitler](screenshots/Filter.jpg)
-![Filter1](screenshots/Filter1.jpg)
-![Search](screenshots/Search.jpg)
-![RecentlyScreen](screenshots/Recently.jpg)
-![FavoriteScreen](screenshots/Fav.jpg)
-![Settings](screenshots/Settings.jpg)
-![TitleScreen](screenshots/TitleScreen.jpg)
-![PlayerScreen](screenshots/PlayerScreen.jpg)
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/Home.jpg" width="200" alt="Home screen" /><br /><sub>Home</sub></td>
+    <td align="center"><img src="screenshots/Search.jpg" width="200" alt="Search" /><br /><sub>Search</sub></td>
+    <td align="center"><img src="screenshots/Filter.jpg" width="200" alt="Filters" /><br /><sub>Filters</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/Filter1.jpg" width="200" alt="Filter results" /><br /><sub>Filter results</sub></td>
+    <td align="center"><img src="screenshots/TitleScreen.jpg" width="200" alt="Title details" /><br /><sub>Details</sub></td>
+    <td align="center"><img src="screenshots/PlayerScreen.jpg" width="200" alt="Player" /><br /><sub>Player</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/Fav.jpg" width="200" alt="Favorites" /><br /><sub>Favorites</sub></td>
+    <td align="center"><img src="screenshots/Recently.jpg" width="200" alt="Recently watched" /><br /><sub>Library</sub></td>
+    <td align="center"><img src="screenshots/Settings.jpg" width="200" alt="Profile and settings" /><br /><sub>Profile</sub></td>
+  </tr>
+</table>
 
 ---
 
