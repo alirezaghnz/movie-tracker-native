@@ -22,9 +22,11 @@ import {
   getImageUrl,
   getMovieCredits,
   getMovieDetails,
+  getMovieSimilar,
   getTVCredits,
   getTVDetails,
   getTVSeasonsDetails,
+  getTVSimilar,
 } from "../services/api/tmdb";
 import ErrorContainer from "../components/ErrorContainer";
 import { BackButton } from "../components/BackButton";
@@ -49,18 +51,21 @@ export default function TitleScreen() {
   const [seasonData, setSeasonData] = useState(null);
   const [episodeLoading, setEpisodeLoading] = useState(false);
   const [expandedOverview, setExpandedOverview] = useState({});
-  const [collection, setCollection] = useState(null); // {name, part}
+  const [collection, setCollection] = useState([]); // {name, part}
+  const [similar, setSimilar] = useState([]);
   const [cast, setCast] = useState([]);
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const insets = useSafeAreaInsets();
 
   const fetchDetails = useCallback(() => {
-    setLoading(true);
+    let cancelled = false;
     const fetcher = type === "movie" ? getMovieDetails : getTVDetails;
     fetcher(id)
       .then((data) => {
+        if (cancelled) return;
         setDetails(data);
+
         // just for tv series
         if (type === "tv") {
           const firstSeason = data.seasons?.find((s) => s.season_number > 0);
@@ -70,7 +75,15 @@ export default function TitleScreen() {
           }
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [id, type]);
 
   useEffect(() => {
@@ -80,12 +93,13 @@ export default function TitleScreen() {
   // Fetch collection movies if the title belongs to a collection( like spider-man :xD)
   useEffect(() => {
     const collectionId = details?.belongs_to_collection?.id;
-    if (!collectionId) {
-      setCollection(null);
-      return;
-    }
+    if (!collectionId) return;
+
+    let cancelled = false;
+
     getCollectionMovies(collectionId)
       .then((data) => {
+        if (cancelled) return;
         const parts = (data.parts || [])
           .filter((p) => p.id !== details.id)
           .sort((a, b) =>
@@ -97,7 +111,25 @@ export default function TitleScreen() {
         });
       })
       .catch(console.error);
+
+    return () => {
+      cancelled = true;
+    };
   }, [details]);
+
+  useEffect(() => {
+    if (!id || !type) return;
+    const fetchSimilar = type === "movie" ? getMovieSimilar : getTVSimilar;
+    fetchSimilar(id)
+      .then((data) => {
+        const items = (data.results || [])
+          .filter((item) => item.poster_path)
+          .slice(0, 15)
+          .map((item) => ({ ...item, media_type: type }));
+        setSimilar(items);
+      })
+      .catch(() => setSimilar([]));
+  }, [id, type]);
 
   // fetch season details
   useEffect(() => {
@@ -237,15 +269,21 @@ export default function TitleScreen() {
                 </View>
               ))}
             </View>
+
             <Text style={styles.title}>{details?.name || details?.title}</Text>
             <View style={styles.metaRow}>
               <Text style={styles.year}>
                 {details?.first_air_date || details?.release_date || "null"}
               </Text>
-              <Text style={styles.detailsRating}>
+
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              >
                 <FontAwesome name="star" size={15} color="yellow" />
-                {details?.vote_average?.toFixed(1)}
-              </Text>
+                <Text style={styles.detailsRating}>
+                  {details?.vote_average?.toFixed(1)}
+                </Text>
+              </View>
               {details?.number_of_seasons > 0 && (
                 <Text style={styles.seasonCount}>
                   {details?.number_of_seasons} Season
@@ -295,6 +333,35 @@ export default function TitleScreen() {
             >
               <Text style={styles.watchText}>Watch Movie</Text>
             </Pressable>
+
+            {similar.length > 0 && (
+              <View style={{ padding: 12 }}>
+                <Text style={styles.sectionTitle}>More like this</Text>
+                <FlatList
+                  data={similar}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => item.id.toString()}
+                  contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      style={styles.collectionCard}
+                      onPress={() =>
+                        navigation.push("Title", { id: item.id, type: "movie" })
+                      }
+                    >
+                      <Image
+                        source={{ uri: getImageUrl(item.poster_path) }}
+                        style={styles.collectionPoster}
+                      />
+                      <Text style={styles.collectionTitle} numberOfLines={2}>
+                        {item.name || item.title}
+                      </Text>
+                    </Pressable>
+                  )}
+                />
+              </View>
+            )}
             {collection && (
               <View style={{ padding: 12 }}>
                 <Text style={styles.sectionTitle}>{collection.name}</Text>
@@ -471,20 +538,28 @@ const styles = StyleSheet.create({
   },
   posterContainer: {
     width: "100%",
-    height: 260,
+    height: 270,
     overflow: "hidden",
   },
   posterOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     justifyContent: "flex-end",
     padding: 16,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   episodeCardUnreleased: {
     opacity: 0.5,
   },
   lockOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center",
     justifyContent: "center",
