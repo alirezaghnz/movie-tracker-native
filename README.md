@@ -16,6 +16,16 @@ A free & open-source Android app to stream any TV series in the world. Zero ads,
 - 🔒 **Privacy** — Your TMDB token is stored securely on your device. No servers, no accounts, no tracking
 - 📦 **No Play Store** — Install directly via APK. No Google account needed
 
+![HomeScreen](screenshots/Home.jpg)
+![Fitler](screenshots/Filter.jpg)
+![Filter1](screenshots/Filter1.jpg)
+![Search](screenshots/Search.jpg)
+![RecentlyScreen](screenshots/Recently.jpg)
+![FavoriteScreen](screenshots/Fav.jpg)
+![Settings](screenshots/Settings.jpg)
+![TitleScreen](screenshots/TitleScreen.jpg)
+![PlayerScreen](screenshots/PlayerScreen.jpg)
+
 ---
 
 ## Streaming
