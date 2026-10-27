@@ -342,7 +342,6 @@ export default function TitleScreen() {
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   keyExtractor={(item) => item.id.toString()}
-                  contentContainerStyle={{ gap: 12, paddingHorizontal: 16 }}
                   renderItem={({ item }) => (
                     <Pressable
                       style={styles.collectionCard}
@@ -356,6 +355,9 @@ export default function TitleScreen() {
                       />
                       <Text style={styles.collectionTitle} numberOfLines={2}>
                         {item.name || item.title}
+                      </Text>
+                      <Text style={styles.collectionYear}>
+                        {item.release_date?.substring(0, 4)}
                       </Text>
                     </Pressable>
                   )}
