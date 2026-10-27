@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 46,
+    marginTop: 20,
     marginBottom: 16,
   },
   discover: {
