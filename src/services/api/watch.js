@@ -19,23 +19,6 @@ export const PLAYER_SOURCES = [
     movieUrl: (id) => `https://vsembed.su/embed/movie/${id}`,
   },
   {
-    id: "peachify",
-    name: "Peachify",
-    tag: null,
-    note: "Movies only",
-    supportsProgress: true,
-    colorParam: "accent", // hex without # → e.g. "e50914"
-    langParam: "sub",
-    params: {
-      autoPlay: "true",
-      pip: "hide",
-      cast: "hide",
-    },
-    seriesUrl: (id, season, ep) =>
-      `https://peachify.top/embed/tv/${id}/${season}/${ep}`,
-    movieUrl: (id) => `https://peachify.top/embed/movie/${id}`,
-  },
-  {
     id: "vidrift",
     name: "Vidrift",
     tag: null,
