@@ -34,6 +34,7 @@ import FilterModal from "../components/FilterModal";
 import { useFilters } from "../hooks/useFilters";
 import { useDiscoverResults } from "../hooks/useDiscoverResults";
 import { getGenreName } from "../constants/genres";
+import { wp } from "../utils/responsive";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -523,6 +524,20 @@ export default function HomeScreen() {
           ))
         )}
       </ScrollView>
+      {hasActiveFilters && (
+        <View style={styles.exitFabWrapper} pointerEvents="box-none">
+          <Pressable
+            style={({ pressed }) => [
+              styles.exitFab,
+              pressed && styles.exitFabPressed,
+            ]}
+            onPress={resetFilters}
+            hitSlop={8}
+          >
+            <Feather name="x" size={22} color="#fff" />
+          </Pressable>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -864,5 +879,29 @@ const styles = StyleSheet.create({
   emptyFilterSubtext: {
     color: "#666",
     fontSize: 13,
+  },
+  exitFabWrapper: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: wp(110),
+    alignItems: "center",
+  },
+  exitFab: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#e50914",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+  },
+  exitFabPressed: {
+    backgroundColor: "#b5070f",
+    transform: [{ scale: 0.94 }],
   },
 });
